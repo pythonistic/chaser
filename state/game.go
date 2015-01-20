@@ -6,12 +6,15 @@ import (
 
 const TWO_PI = math.Pi * 2
 const NEG_TWO_PI = math.Pi * -2
+const BEHAVIOR_AVOID = 1
+const BEHAVIOR_ATTRACT = 2
 
 var (
 	player    *Player
 	chaser    *Chaser
 	score     uint32
 	playfield *Playfield
+	target    *Location
 )
 
 type Location struct {
@@ -101,6 +104,23 @@ func UpdateState() {
 	}
 }
 
+func SetClickLocation(click Location, behavior uint8) {
+	target = &click
+
+	// calculate the target angle
+	y := player.Location.Y - click.Y
+	x := click.X - player.Location.X
+
+	if behavior == BEHAVIOR_AVOID {
+		x *= -1
+		y *= -1
+	}
+
+	theta := math.Atan2(y, x)
+
+	player.SetDirection(theta)
+}
+
 // currently 2D, Z ignored
 func translateLocation(origin Location, theta float64, speed float64) Location {
 	x := origin.X + math.Cos(theta)*speed
@@ -112,6 +132,10 @@ func (p *Player) AdjustSpeed(amount float64) {
 	if p.Speed > -1.0 && p.Speed < 1.0 {
 		p.Speed += amount
 	}
+}
+
+func (p *Player) SetDirection(theta float64) {
+	p.Direction = theta
 }
 
 func (p *Player) AdjustDirection(amount float64) {
