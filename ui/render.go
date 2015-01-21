@@ -4,11 +4,25 @@ import (
 	"chaser/state"
 	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/sdl_image"
 	"github.com/veandco/go-sdl2/sdl_ttf"
 	"os"
 	"strconv"
 	"time"
 )
+
+type Sprite struct {
+	name     string
+	filename string
+	// TODO split frames into types
+	// TODO consider overlays on sprites (clothes, equipment, buffs)
+	frameCount uint8
+	rawFrame   []*sdl.Surface
+	frame      []*sdl.Texture
+	size       []*sdl.Rect
+	offsetX    []float64 // offset is because sprites render center at location
+	offsetY    []float64
+}
 
 const (
 	COLOR_DEPTH_8           uint8  = 8
@@ -40,6 +54,9 @@ var (
 	currentFps  string    = "0"
 	sansFont16  *ttf.Font
 	renderFps   bool = true
+	spriteDefs       = []string{"player", "resources/PlanetCute PNG/Character Pink Girl.png",
+		"chaser", "resources/PlanetCute PNG/Heart.png"}
+	sprites = make(map[string]*Sprite)
 )
 
 // ==== Public interface
@@ -58,6 +75,7 @@ type Screen struct {
 func InitRenderer(screen *Screen) {
 	initScreen(screen)
 	initText()
+	loadSprites()
 }
 
 func UpdateScreen() {
@@ -85,8 +103,8 @@ func UpdateScreen() {
 		renderFpsCounter(rendererViewport)
 	}
 
-	renderPlayer()
 	renderChaser()
+	renderPlayer()
 
 	renderer.Present()
 }
@@ -145,6 +163,51 @@ func initText() {
 	sansFont16.SetOutline(1)
 }
 
+func loadSprites() {
+	inited := img.Init(img.INIT_PNG)
+	if inited&img.INIT_PNG != img.INIT_PNG {
+		panic(img.GetError())
+	}
+
+	// load the sprites
+	for idx := 0; idx < len(spriteDefs); idx += 2 {
+		spriteName := spriteDefs[idx]
+		spriteFilename := spriteDefs[idx+1]
+
+		// TODO at this time, all the sprites are single image
+		// we'd need to include sprite information:
+		// frame size, frame id/count
+		// image strip position and size
+		rwOp := sdl.RWFromFile(spriteFilename, "rb")
+
+		if rwOp != nil {
+			spriteSurface, err := img.LoadPNG_RW(rwOp)
+			//		spriteSurface, err := img.Load(spriteFilename)
+			if err != nil {
+				panic(err)
+			}
+
+			newSprite := Sprite{spriteName, spriteFilename, 1,
+				make([]*sdl.Surface, 1, 1), make([]*sdl.Texture, 1, 1),
+				make([]*sdl.Rect, 1, 1), make([]float64, 1, 1), make([]float64, 1, 1)}
+			newSprite.rawFrame[0] = spriteSurface
+			newSprite.frame[0], err = renderer.CreateTextureFromSurface(spriteSurface)
+			if err != nil {
+				panic(err)
+			}
+			newSprite.size[0] = &sdl.Rect{0, 0, spriteSurface.W, spriteSurface.H}
+			newSprite.offsetX[0] = float64(spriteSurface.W) / -2.0
+			newSprite.offsetY[0] = float64(spriteSurface.H) / -2.0
+			sprites[spriteName] = &newSprite
+		} else {
+			panic(spriteFilename + " was nil")
+		}
+	}
+
+	// cleanup
+	img.Quit()
+}
+
 func calculateFps() {
 	var lastFpsDuration time.Duration = time.Since(lastFpsTime)
 	frameCount += 1
@@ -182,18 +245,33 @@ func renderFpsCounter(rendererViewport *sdl.Rect) {
 
 func renderPlayer() {
 	player := state.GetPlayer()
-	renderTriangle(player.Location, GREEN)
+	//renderTriangle(player.Location, GREEN)
+	renderSprite(sprites["player"], player.Location)
 }
 
 func renderChaser() {
 	chaser := state.GetChaser()
-	renderTriangle(chaser.Location, RED)
+	//renderTriangle(chaser.Location, RED)
+	renderSprite(sprites["chaser"], chaser.Location)
 }
 
 func renderTriangle(o state.Location, c sdl.Color) {
 	renderer.SetDrawColor(c.R, c.G, c.B, c.A)
-	points := []sdl.Point{{int32(o.X) - 5, int32(o.Y) - 5}, {int32(o.X) - 5, int32(o.Y) + 5}, {int32(o.X) + 5, int32(o.Y) + 5}}
+	points := []sdl.Point{{int32(o.X) - 2, int32(o.Y) + 2},
+		{int32(o.X) + 2, int32(o.Y) + 2}, {int32(o.X), int32(o.Y) - 2},
+		{int32(o.X) - 2, int32(o.Y) + 2}}
 	renderer.DrawLines(points)
+}
+
+func renderSprite(sprite *Sprite, location state.Location) {
+	rect := &sdl.Rect{int32(sprite.offsetX[0] + location.X),
+		int32(sprite.offsetY[0] + location.Y),
+		sprite.size[0].W, sprite.size[0].H}
+	err := renderer.Copy(sprite.frame[0], nil, rect)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to copy texture to renderer: %s\n", err)
+		panic(err)
+	}
 }
 
 func shutdownScreen() {

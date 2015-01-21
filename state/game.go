@@ -47,11 +47,11 @@ func InitState(p *Playfield) {
 }
 
 func initPlayer() {
-	player = &Player{Location{0.0, 0.0, 0.0}, -0.75, 1.0}
+	player = &Player{Location{0.0, 0.0, 10.0}, -0.75, 1.0}
 }
 
 func initChaser() {
-	chaser = &Chaser{Location{10.0, 10.0, 10.0}, -0.5, 0.9}
+	chaser = &Chaser{Location{10.0, 10.0, 9.0}, -0.5, 0.75}
 }
 
 func GetPlayer() *Player {
@@ -102,6 +102,8 @@ func UpdateState() {
 		chaser.Location.Y = 0
 		chaser.Speed = 0
 	}
+
+	UpdateChaser()
 }
 
 func SetClickLocation(click Location, behavior uint8) {
@@ -121,6 +123,15 @@ func SetClickLocation(click Location, behavior uint8) {
 	player.SetDirection(theta)
 }
 
+func UpdateChaser() {
+	// TODO refactor this - copied chase logic from SetClickLocation
+	// set the chaser to follow the player
+	y := chaser.Location.Y - player.Location.Y
+	x := player.Location.X - chaser.Location.X
+	theta := math.Atan2(y, x)
+	chaser.SetDirection(theta)
+}
+
 // currently 2D, Z ignored
 func translateLocation(origin Location, theta float64, speed float64) Location {
 	x := origin.X + math.Cos(theta)*speed
@@ -136,6 +147,10 @@ func (p *Player) AdjustSpeed(amount float64) {
 
 func (p *Player) SetDirection(theta float64) {
 	p.Direction = theta
+}
+
+func (c *Chaser) SetDirection(theta float64) {
+	c.Direction = theta
 }
 
 func (p *Player) AdjustDirection(amount float64) {
