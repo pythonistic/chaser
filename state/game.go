@@ -45,10 +45,10 @@ type Playfield struct {
 }
 
 type Wall struct {
-	X1 float64
-	Y1 float64
-	W  float64
-	H  float64
+	X float64
+	Y float64
+	W float64
+	H float64
 }
 
 func InitState(p *Playfield) {
@@ -70,19 +70,64 @@ func createWalls() {
 	wall = make([]*Wall, 10, 10)
 	boundWidth := playfield.Width - 20
 	boundHeight := playfield.Height - 20
+	xMin := 30.0
+	yMin := 30.0
+	var width, height, x1, x2, y1, y2 float64
+	var attempts uint8
+
 	//bounds := sdl.Rect{10, 10, boundWidth, boundHeight}
 	for i := 0; i < 10; i++ {
-		width := rng.Float64()*100 + 1
-		height := rng.Float64()*100 + 1
+		attempts = 0
+		for true {
+			// if we've attempted to place a wall too many times, place it
+			// anyway even if it will overlap or be out of bounds
+			if attempts > 10 {
+				break
+			}
+			attempts += 1
 
-		if width >= height {
-			height = 10
-		} else {
-			width = 10
+			width = rng.Float64()*100 + 1
+			height = rng.Float64()*100 + 1
+
+			if width >= height {
+				height = 10
+			} else {
+				width = 10
+			}
+
+			x1 = rng.Float64()*boundWidth + 10
+			y1 = rng.Float64()*boundHeight + 10
+			x2 = x1 + width
+			y2 = y1 + height
+
+			// check for out of bounds wall ends -- retry if that happens
+			if x2 > boundWidth {
+				continue
+			}
+
+			if y2 > boundHeight {
+				continue
+			}
+
+			// reduce overlaps by checking to see if walls end too close
+			for j := 0; j < i; j++ {
+				w := wall[j]
+				if ((w.X-xMin <= x1 && x1 <= w.X+xMin) &&
+					(w.Y-yMin <= y1 && y1 <= w.Y+yMin)) ||
+					((w.X+w.W-xMin <= x1 && x1 <= w.X+w.W+xMin) &&
+						(w.Y+w.H-yMin <= y1 && y1 <= w.Y+w.H+yMin)) ||
+					((w.X-xMin <= x2 && x2 <= w.X+xMin) &&
+						(w.Y-yMin <= y2 && y2 <= w.Y+yMin)) ||
+					((w.X-xMin <= x2 && x2 <= w.X+xMin) &&
+						(w.Y-yMin <= y2 && y2 <= w.Y+yMin)) ||
+					((w.X+w.W-xMin <= x2 && x2 <= w.X+w.W+xMin) &&
+						(w.Y+w.H-yMin <= y2 && y2 <= w.Y+w.H+yMin)) {
+					break
+				}
+
+			}
 		}
 
-		x1 := rng.Float64()*boundWidth + 10
-		y1 := rng.Float64()*boundHeight + 10
 		wall[i] = &Wall{x1, y1, width, height}
 	}
 }
