@@ -47,8 +47,8 @@ type Playfield struct {
 type Wall struct {
 	X1 float64
 	Y1 float64
-	X2 float64
-	Y2 float64
+	W  float64
+	H  float64
 }
 
 func InitState(p *Playfield) {
@@ -75,7 +75,7 @@ func createWalls() {
 		width := rng.Float64()*100 + 1
 		height := rng.Float64()*100 + 1
 
-		if width > height {
+		if width >= height {
 			height = 10
 		} else {
 			width = 10
@@ -83,9 +83,7 @@ func createWalls() {
 
 		x1 := rng.Float64()*boundWidth + 10
 		y1 := rng.Float64()*boundHeight + 10
-		x2 := x1 + width
-		y2 := y1 + height
-		wall[i] = &Wall{x1, x2, x2, y2}
+		wall[i] = &Wall{x1, y1, width, height}
 	}
 }
 

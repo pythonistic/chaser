@@ -279,7 +279,8 @@ func renderWalls() {
 	walls := state.GetWalls()
 	for i := 0; i < len(walls); i++ {
 		wall := walls[i]
-		rect := &sdl.Rect{int32(wall.X1), int32(wall.Y1), int32(wall.X2), int32(wall.Y2)}
+		fmt.Println(wall)
+		rect := &sdl.Rect{int32(wall.X1), int32(wall.Y1), int32(wall.W), int32(wall.H)}
 		renderer.SetDrawColor(RED.R, RED.G, RED.B, RED.A)
 		renderer.DrawRect(rect)
 	}
