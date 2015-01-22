@@ -112,6 +112,7 @@ func createWalls() {
 			// reduce overlaps by checking to see if walls end too close
 			for j := 0; j < i; j++ {
 				w := wall[j]
+				// TODO fix these bounds checks
 				if ((w.X-xMin <= x1 && x1 <= w.X+xMin) &&
 					(w.Y-yMin <= y1 && y1 <= w.Y+yMin)) ||
 					((w.X+w.W-xMin <= x1 && x1 <= w.X+w.W+xMin) &&
@@ -163,6 +164,23 @@ func UpdateState() {
 		player.Speed = 0
 	}
 
+	// check for wall collisions
+	for i := 0; i < len(wall); i++ {
+		w := wall[i]
+		// TODO check sprite bounds instead of the center of the sprite
+		// floats so we gotta check within a range
+		/*
+			if ((w.X-0.5 <= player.Location.X && player.Location.X <= w.X+0.5) ||
+			(w.X+w.W-0.5 <= player.Location.X && player.Location.X <= w.X+w.W+0.5)) &&
+			((w.Y-0.5 <= player.Location.Y && player.Location.Y <= w.Y+0.5) ||
+			(w.Y+w.H-0.5 <= player.Location.Y && player.Location.Y <= w.Y+w.H+0.5)) {
+		*/
+		if (w.X-0.5 <= player.Location.X && player.Location.X <= w.X+w.W+0.5) &&
+			(w.Y-0.5 <= player.Location.Y && player.Location.Y <= w.Y+w.H+0.5) {
+			player.Speed = 0
+		}
+	}
+
 	chaser.Location = translateLocation(chaser.Location, chaser.Direction, chaser.Speed)
 
 	if chaser.Location.X >= playfield.Width {
@@ -199,6 +217,9 @@ func SetClickLocation(click Location, behavior uint8) {
 	theta := math.Atan2(y, x)
 
 	player.SetDirection(theta)
+
+	// also reset the speed (in case the sprite stopped)
+	player.SetSpeed(1.0)
 }
 
 func UpdateChaser() {
@@ -208,6 +229,7 @@ func UpdateChaser() {
 	x := player.Location.X - chaser.Location.X
 	theta := math.Atan2(y, x)
 	chaser.SetDirection(theta)
+	chaser.SetSpeed(0.75)
 }
 
 // currently 2D, Z ignored
@@ -221,6 +243,14 @@ func (p *Player) AdjustSpeed(amount float64) {
 	if p.Speed > -1.0 && p.Speed < 1.0 {
 		p.Speed += amount
 	}
+}
+
+func (p *Player) SetSpeed(amount float64) {
+	p.Speed = amount
+}
+
+func (c *Chaser) SetSpeed(amount float64) {
+	c.Speed = amount
 }
 
 func (p *Player) SetDirection(theta float64) {
