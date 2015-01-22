@@ -2,6 +2,8 @@ package state
 
 import (
 	"math"
+	"math/rand"
+	"time"
 )
 
 const TWO_PI = math.Pi * 2
@@ -15,6 +17,8 @@ var (
 	score     uint32
 	playfield *Playfield
 	target    *Location
+	rng       *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	wall      []*Wall
 )
 
 type Location struct {
@@ -40,10 +44,18 @@ type Playfield struct {
 	Height float64
 }
 
+type Wall struct {
+	X1 float64
+	Y1 float64
+	X2 float64
+	Y2 float64
+}
+
 func InitState(p *Playfield) {
 	playfield = p
 	initPlayer()
 	initChaser()
+	createWalls()
 }
 
 func initPlayer() {
@@ -52,6 +64,29 @@ func initPlayer() {
 
 func initChaser() {
 	chaser = &Chaser{Location{10.0, 10.0, 9.0}, -0.5, 0.75}
+}
+
+func createWalls() {
+	wall = make([]*Wall, 10, 10)
+	boundWidth := playfield.Width - 20
+	boundHeight := playfield.Height - 20
+	//bounds := sdl.Rect{10, 10, boundWidth, boundHeight}
+	for i := 0; i < 10; i++ {
+		width := rng.Float64()*100 + 1
+		height := rng.Float64()*100 + 1
+
+		if width > height {
+			height = 10
+		} else {
+			width = 10
+		}
+
+		x1 := rng.Float64()*boundWidth + 10
+		y1 := rng.Float64()*boundHeight + 10
+		x2 := x1 + width
+		y2 := y1 + height
+		wall[i] = &Wall{x1, x2, x2, y2}
+	}
 }
 
 func GetPlayer() *Player {
@@ -160,4 +195,8 @@ func (p *Player) AdjustDirection(amount float64) {
 	} else if p.Direction < NEG_TWO_PI {
 		p.Direction = p.Direction - NEG_TWO_PI
 	}
+}
+
+func GetWalls() []*Wall {
+	return wall
 }
