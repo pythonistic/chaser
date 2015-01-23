@@ -1,9 +1,10 @@
 package state
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
-	"time"
+	// "time"
 )
 
 const TWO_PI = math.Pi * 2
@@ -17,8 +18,8 @@ var (
 	score     uint32
 	playfield *Playfield
 	target    *Location
-	rng       *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-	wall      []*Wall
+	rng       *rand.Rand
+	wall      []*Box
 )
 
 type Location struct {
@@ -44,14 +45,11 @@ type Playfield struct {
 	Height float64
 }
 
-type Wall struct {
-	X float64
-	Y float64
-	W float64
-	H float64
-}
-
 func InitState(p *Playfield) {
+	//seed := time.Now().UnixNano()
+	var seed int64 = 1421978894553050386
+	fmt.Println("seed:", seed)
+	rng = rand.New(rand.NewSource(seed))
 	playfield = p
 	initPlayer()
 	initChaser()
@@ -67,69 +65,51 @@ func initChaser() {
 }
 
 func createWalls() {
-	wall = make([]*Wall, 10, 10)
+	wall = make([]*Box, 0, 10)
 	boundWidth := playfield.Width - 20
 	boundHeight := playfield.Height - 20
 	xMin := 30.0
 	yMin := 30.0
 	var width, height, x1, x2, y1, y2 float64
-	var attempts uint8
+	var newWall *Box
 
 	//bounds := sdl.Rect{10, 10, boundWidth, boundHeight}
-	for i := 0; i < 10; i++ {
-		attempts = 0
-		for true {
-			// if we've attempted to place a wall too many times, place it
-			// anyway even if it will overlap or be out of bounds
-			if attempts > 10 {
-				break
-			}
-			attempts += 1
+	for len(wall) < 10 {
+		width = rng.Float64()*100 + 1
+		height = rng.Float64()*100 + 1
 
-			width = rng.Float64()*100 + 1
-			height = rng.Float64()*100 + 1
+		if width >= height {
+			height = 10
+		} else {
+			width = 10
+		}
 
-			if width >= height {
-				height = 10
-			} else {
-				width = 10
-			}
+		x1 = rng.Float64()*boundWidth + 10
+		y1 = rng.Float64()*boundHeight + 10
+		x2 = x1 + width
+		y2 = y1 + height
 
-			x1 = rng.Float64()*boundWidth + 10
-			y1 = rng.Float64()*boundHeight + 10
-			x2 = x1 + width
-			y2 = y1 + height
+		// check for out of bounds wall ends -- retry if that happens
+		if x2 > boundWidth {
+			continue
+		}
 
-			// check for out of bounds wall ends -- retry if that happens
-			if x2 > boundWidth {
+		if y2 > boundHeight {
+			continue
+		}
+
+		newWall = &Box{x1 - xMin/2, y1 - yMin/2, width + xMin/2, height + yMin/2}
+
+		// reduce overlaps by checking to see if walls end too close
+		for j := 0; j < len(wall); j++ {
+			w := wall[j]
+			if w.Intersects(newWall) {
 				continue
-			}
-
-			if y2 > boundHeight {
-				continue
-			}
-
-			// reduce overlaps by checking to see if walls end too close
-			for j := 0; j < i; j++ {
-				w := wall[j]
-				// TODO fix these bounds checks
-				if ((w.X-xMin <= x1 && x1 <= w.X+xMin) &&
-					(w.Y-yMin <= y1 && y1 <= w.Y+yMin)) ||
-					((w.X+w.W-xMin <= x1 && x1 <= w.X+w.W+xMin) &&
-						(w.Y+w.H-yMin <= y1 && y1 <= w.Y+w.H+yMin)) ||
-					((w.X-xMin <= x2 && x2 <= w.X+xMin) &&
-						(w.Y-yMin <= y2 && y2 <= w.Y+yMin)) ||
-					((w.X-xMin <= x2 && x2 <= w.X+xMin) &&
-						(w.Y-yMin <= y2 && y2 <= w.Y+yMin)) ||
-					((w.X+w.W-xMin <= x2 && x2 <= w.X+w.W+xMin) &&
-						(w.Y+w.H-yMin <= y2 && y2 <= w.Y+w.H+yMin)) {
-					break
-				}
-
 			}
 		}
 
-		wall[i] = &Wall{x1, y1, width, height}
+		fmt.Println(len(wall))
+		wall = append(wall, &Box{x1, y1, width, height})
 	}
 }
 
@@ -270,6 +250,6 @@ func (p *Player) AdjustDirection(amount float64) {
 	}
 }
 
-func GetWalls() []*Wall {
+func GetWalls() []*Box {
 	return wall
 }
