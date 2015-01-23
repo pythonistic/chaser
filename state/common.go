@@ -1,7 +1,6 @@
 package state
 
 import (
-	"fmt"
 	"math"
 	)
 
@@ -17,6 +16,7 @@ type Box struct {
 	H float64
 }
 
+// sort array of points by X
 type ByX []Point
 
 func (p ByX) Len() int {
@@ -36,11 +36,13 @@ func (b *Box) Contains(p *Point) bool {
 		b.Y <= p.Y && p.Y <= b.Y+b.H
 }
 
+// calculate the distance between two points
 func (p *Point) Distance(o *Point) float64 {
 	return math.Sqrt((p.X-o.X)*(p.X-o.X) +
 		(p.Y-p.Y)*(p.Y-o.Y))
 }
 
+// find the closest pair of points with two boxes
 func (b *Box) ClosestPair(t *Box) (*Point, *Point, float64) {
 	points1 := [4]Point{Point{b.X, b.Y}, Point{b.X + b.W, b.Y},
 		Point{b.X + b.W, b.Y + b.H}, Point{b.X, b.Y + b.H}}
@@ -63,40 +65,23 @@ func (b *Box) ClosestPair(t *Box) (*Point, *Point, float64) {
 	return closest1, closest2, minimumDistance
 }
 
+// return true if the boxes intersect
 func (b *Box) Intersects(t *Box) bool {
-	point1, point2, distance := b.ClosestPair(t)
-	fmt.Println("Closest pair", point1, point2, distance)
-/*	points := [2]Point{point1, point2}
-  sort.Sort(ByX(points))
-	points[0].X + distance / 2 */
-	return distance < 0
-	/*
-		  points := [8]Point{Point{b.X, b.Y}, Point{b.X + b.W, b.Y},
-		  Point{b.X + b.W, b.Y + b.H}, Point{b.X, b.Y + b.H},
-		  Point{t.X, t.Y}, Point{t.X + t.W, t.Y},
-		  Point{t.X + t.W, t.Y + t.H}, Point{t.X, t.Y + t.H}}
-				sort.Sort(ByX(points))
-				points1 := points[0:4]
-				points2 := points[4:8]
-				xMid := points1[3].Distance(points2[0])/2.0 + points1[3].X
-				dLMin := points1[3].Distance(Point(xMid, 0.0))
-				dRMin := points2[0].Distance(Point(xMid, 0.0))
-				dLRMin := 9999999999.9
-				for i := 0; i < len(points); i++ {
+	if b.Y + b.H < t.Y {
+		return false
+	}
 
-				}
-	*/
-	/*
-		fmt.Println(b, t)
-		does := (((b.X <= t.X && t.X <= b.X+b.W) ||
-			(b.X <= t.X+t.W && t.X+t.W <= b.X+b.W)) &&
-			((b.Y <= t.Y && t.Y <= b.Y+b.H) ||
-				(b.Y <= t.Y+t.H && t.Y+t.H <= b.Y+b.H)) ||
-			((t.X <= b.X && b.X <= t.X+t.W) ||
-				(t.X <= b.X+b.W && b.X+b.W <= t.X+t.W)) &&
-				((t.Y <= b.Y && b.Y <= t.Y+t.H) ||
-					(t.Y <= b.Y+b.H && b.Y+b.H < b.Y+b.H)))
-		fmt.Println("does", does)
-		return does
-	*/
+  if b.Y > t.Y + t.H {
+		return false
+	}
+
+	if b.X + b.W < t.X {
+		return false
+	}
+
+	if b.X > t.X + t.W {
+		return false
+	}
+
+	return true
 }

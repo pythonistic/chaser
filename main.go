@@ -39,10 +39,10 @@ func main() {
 }
 
 func Init() {
+	state.InitState(&playfield)
 	var screen = ui.Screen{ui.SCREEN_ORIGIN_UNDEFINED, ui.SCREEN_ORIGIN_UNDEFINED,
 		uint32(playfield.Width), uint32(playfield.Height), ui.COLOR_DEPTH_24, true, "Chaser"}
 	ui.InitRenderer(&screen)
-	state.InitState(&playfield)
 }
 
 func Sleep() {

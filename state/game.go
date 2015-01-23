@@ -32,12 +32,16 @@ type Player struct {
 	Location  Location
 	Direction float64
 	Speed     float64
+	Bounds		*Box
+	HalfW			float64
+	HalfH			float64
 }
 
 type Chaser struct {
 	Location  Location
 	Direction float64
 	Speed     float64
+	Bounds		*Box
 }
 
 type Playfield struct {
@@ -57,11 +61,11 @@ func InitState(p *Playfield) {
 }
 
 func initPlayer() {
-	player = &Player{Location{0.0, 0.0, 10.0}, -0.75, 1.0}
+	player = &Player{Location{0.0, 0.0, 10.0}, -0.75, 1.0, nil, 0, 0}
 }
 
 func initChaser() {
-	chaser = &Chaser{Location{10.0, 10.0, 9.0}, -0.5, 0.75}
+	chaser = &Chaser{Location{10.0, 10.0, 9.0}, -0.5, 0.75, nil}
 }
 
 func createWalls() {
@@ -101,15 +105,18 @@ func createWalls() {
 		newWall = &Box{x1 - xMin/2, y1 - yMin/2, width + xMin/2, height + yMin/2}
 
 		// reduce overlaps by checking to see if walls end too close
+		var intersected bool = false
 		for j := 0; j < len(wall); j++ {
 			w := wall[j]
 			if w.Intersects(newWall) {
-				continue
+				intersected = true
+				break
 			}
 		}
 
-		fmt.Println(len(wall))
+		if !intersected {
 		wall = append(wall, &Box{x1, y1, width, height})
+		}
 	}
 }
 
@@ -127,7 +134,9 @@ func GetScore() uint32 {
 
 func UpdateState() {
 	player.Location = translateLocation(player.Location, player.Direction, player.Speed)
+	collisionBox := player.GetCollisionBox()
 
+  // TODO fix player bounds using collision box
 	if player.Location.X >= playfield.Width {
 		player.Location.X = playfield.Width - 1
 		player.Speed = 0
@@ -155,8 +164,7 @@ func UpdateState() {
 			((w.Y-0.5 <= player.Location.Y && player.Location.Y <= w.Y+0.5) ||
 			(w.Y+w.H-0.5 <= player.Location.Y && player.Location.Y <= w.Y+w.H+0.5)) {
 		*/
-		if (w.X-0.5 <= player.Location.X && player.Location.X <= w.X+w.W+0.5) &&
-			(w.Y-0.5 <= player.Location.Y && player.Location.Y <= w.Y+w.H+0.5) {
+		if collisionBox.Intersects(w) {
 			player.Speed = 0
 		}
 	}
@@ -248,6 +256,12 @@ func (p *Player) AdjustDirection(amount float64) {
 	} else if p.Direction < NEG_TWO_PI {
 		p.Direction = p.Direction - NEG_TWO_PI
 	}
+}
+
+func (p *Player) GetCollisionBox() *Box {
+	b := &Box{p.Location.X - p.HalfW, p.Location.Y - p.HalfH,
+		p.Bounds.W, p.Bounds.H}
+	return b
 }
 
 func GetWalls() []*Box {

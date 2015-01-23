@@ -207,6 +207,18 @@ func loadSprites() {
 
 	// cleanup
 	img.Quit()
+
+	// set the Player and Chaser bounds
+	playerSprite := sprites["player"].size[0]
+	chaserSprite := sprites["chaser"].size[0]
+	state.GetPlayer().Bounds = &state.Box{float64(playerSprite.X),
+		float64(playerSprite.Y), float64(playerSprite.W) / 2.0,
+		float64(playerSprite.H) / 2.0}
+	state.GetPlayer().HalfW = float64(playerSprite.W) / 4.0
+	state.GetPlayer().HalfH = float64(playerSprite.H) / 4.0 // the image is huge!
+	state.GetChaser().Bounds = &state.Box{float64(chaserSprite.X),
+		float64(chaserSprite.Y), float64(chaserSprite.W),
+		float64(chaserSprite.H)}
 }
 
 func calculateFps() {
@@ -246,6 +258,11 @@ func renderFpsCounter(rendererViewport *sdl.Rect) {
 
 func renderPlayer() {
 	player := state.GetPlayer()
+
+  bounds := player.GetCollisionBox()
+	rect := &sdl.Rect{int32(bounds.X), int32(bounds.Y), int32(bounds.W), int32(bounds.H)}
+	renderer.SetDrawColor(YELLOW.R, YELLOW.G, YELLOW.B, YELLOW.A)
+	renderer.DrawRect(rect)
 	//renderTriangle(player.Location, GREEN)
 	renderSprite(sprites["player"], player.Location)
 }
