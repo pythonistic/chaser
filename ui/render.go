@@ -20,8 +20,8 @@ type Sprite struct {
 	rawFrame   []*sdl.Surface
 	frame      []*sdl.Texture
 	size       []*sdl.Rect
-	offsetX    []float64 // offset is because sprites render center at location
-	offsetY    []float64
+	offsetX    []int32 // offset is because sprites render center at location
+	offsetY    []int32
 }
 
 const (
@@ -190,15 +190,15 @@ func loadSprites() {
 
 			newSprite := Sprite{spriteName, spriteFilename, 1,
 				make([]*sdl.Surface, 1, 1), make([]*sdl.Texture, 1, 1),
-				make([]*sdl.Rect, 1, 1), make([]float64, 1, 1), make([]float64, 1, 1)}
+				make([]*sdl.Rect, 1, 1), make([]int32, 1, 1), make([]int32, 1, 1)}
 			newSprite.rawFrame[0] = spriteSurface
 			newSprite.frame[0], err = renderer.CreateTextureFromSurface(spriteSurface)
 			if err != nil {
 				panic(err)
 			}
 			newSprite.size[0] = &sdl.Rect{0, 0, spriteSurface.W, spriteSurface.H}
-			newSprite.offsetX[0] = float64(spriteSurface.W) / -2.0
-			newSprite.offsetY[0] = float64(spriteSurface.H) / -2.0
+			newSprite.offsetX[0] = spriteSurface.W / -2
+			newSprite.offsetY[0] = spriteSurface.H / -2
 			sprites[spriteName] = &newSprite
 		} else {
 			panic(spriteFilename + " was nil")
@@ -211,14 +211,14 @@ func loadSprites() {
 	// set the Player and Chaser bounds
 	playerSprite := sprites["player"].size[0]
 	chaserSprite := sprites["chaser"].size[0]
-	state.GetPlayer().Bounds = &state.Box{float64(playerSprite.X),
-		float64(playerSprite.Y), float64(playerSprite.W) / 2.0,
-		float64(playerSprite.H) / 2.0}
-	state.GetPlayer().HalfW = float64(playerSprite.W) / 4.0
-	state.GetPlayer().HalfH = float64(playerSprite.H) / 4.0 // the image is huge!
-	state.GetChaser().Bounds = &state.Box{float64(chaserSprite.X),
-		float64(chaserSprite.Y), float64(chaserSprite.W),
-		float64(chaserSprite.H)}
+	state.GetPlayer().Bounds = &state.Box{playerSprite.X,
+		playerSprite.Y, playerSprite.W / 2,
+		playerSprite.H / 2}
+	state.GetPlayer().HalfW = playerSprite.W / 4
+	state.GetPlayer().HalfH = playerSprite.H / 4 // the image is huge!
+	state.GetChaser().Bounds = &state.Box{chaserSprite.X,
+		chaserSprite.Y, chaserSprite.W,
+		chaserSprite.H}
 }
 
 func calculateFps() {
@@ -260,7 +260,7 @@ func renderPlayer() {
 	player := state.GetPlayer()
 
   bounds := player.GetCollisionBox()
-	rect := &sdl.Rect{int32(bounds.X), int32(bounds.Y), int32(bounds.W), int32(bounds.H)}
+	rect := &sdl.Rect{bounds.X, bounds.Y, bounds.W, bounds.H}
 	renderer.SetDrawColor(YELLOW.R, YELLOW.G, YELLOW.B, YELLOW.A)
 	renderer.DrawRect(rect)
 	//renderTriangle(player.Location, GREEN)
@@ -282,8 +282,8 @@ func renderTriangle(o state.Location, c sdl.Color) {
 }
 
 func renderSprite(sprite *Sprite, location state.Location) {
-	rect := &sdl.Rect{int32(sprite.offsetX[0] + location.X),
-		int32(sprite.offsetY[0] + location.Y),
+	rect := &sdl.Rect{sprite.offsetX[0] + location.X,
+		sprite.offsetY[0] + location.Y,
 		sprite.size[0].W, sprite.size[0].H}
 	err := renderer.Copy(sprite.frame[0], nil, rect)
 	if err != nil {
@@ -296,7 +296,7 @@ func renderWalls() {
 	walls := state.GetWalls()
 	for i := 0; i < len(walls); i++ {
 		wall := walls[i]
-		rect := &sdl.Rect{int32(wall.X), int32(wall.Y), int32(wall.W), int32(wall.H)}
+		rect := &sdl.Rect{wall.X, wall.Y, wall.W, wall.H}
 		renderer.SetDrawColor(RED.R, RED.G, RED.B, RED.A)
 		renderer.DrawRect(rect)
 	}

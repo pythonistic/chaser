@@ -30,10 +30,10 @@ func HandleEvents() bool {
 			case sdl.MOUSEBUTTONUP:
 				switch t.Button {
 				case sdl.BUTTON_LEFT:
-					state.SetClickLocation(state.Location{float64(t.X), float64(t.Y), 0.0},
+					state.SetClickLocation(state.Location{t.X, t.Y, 0.0},
 						state.BEHAVIOR_ATTRACT)
 				case sdl.BUTTON_RIGHT:
-					state.SetClickLocation(state.Location{float64(t.X), float64(t.Y), 0.0},
+					state.SetClickLocation(state.Location{t.X, t.Y, 0.0},
 						state.BEHAVIOR_AVOID)
 				}
 			}

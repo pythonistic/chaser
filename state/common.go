@@ -5,15 +5,15 @@ import (
 	)
 
 type Point struct {
-	X float64
-	Y float64
+	X int32
+	Y int32
 }
 
 type Box struct {
-	X float64
-	Y float64
-	W float64
-	H float64
+	X int32
+	Y int32
+	W int32
+	H int32
 }
 
 // sort array of points by X
@@ -38,8 +38,8 @@ func (b *Box) Contains(p *Point) bool {
 
 // calculate the distance between two points
 func (p *Point) Distance(o *Point) float64 {
-	return math.Sqrt((p.X-o.X)*(p.X-o.X) +
-		(p.Y-p.Y)*(p.Y-o.Y))
+	return math.Sqrt(float64((p.X-o.X)*(p.X-o.X) +
+		(p.Y-p.Y)*(p.Y-o.Y)))
 }
 
 // find the closest pair of points with two boxes
