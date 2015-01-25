@@ -17,7 +17,7 @@ const FRAMERATE_SLEEP_NS int64 = int64(time.Second) / FRAMERATE
 const MINIMUM_SLEEP_DURATION time.Duration = time.Duration(10 * 1000 * 1000)
 
 // playfield size
-var playfield state.Playfield = state.Playfield{800.0, 600.0}
+var playfield state.Playfield = state.Playfield{1024, 768}
 
 var lastSleep time.Time
 

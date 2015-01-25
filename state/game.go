@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	// "time"
+	"time"
 )
 
 const TWO_PI = math.Pi * 2
@@ -51,8 +51,10 @@ type Playfield struct {
 }
 
 func InitState(p *Playfield) {
-	//seed := time.Now().UnixNano()
-	var seed int64 = 1421978894553050386
+	seed := time.Now().UnixNano()
+	//var seed int64 = 1421978894553050386
+  // this seed has a maze gen bug
+	seed = 1422165503556202364
 	fmt.Println("seed:", seed)
 	rng = rand.New(rand.NewSource(seed))
 	playfield = p
@@ -62,7 +64,8 @@ func InitState(p *Playfield) {
 }
 
 func random(min int32, max int32) int32 {
-	return int32(rng.Intn(int(max - min))) + min
+	fmt.Println("random", min, max)
+	return int32(rng.Intn(int(max-min))) + min
 }
 
 func initPlayer() {
@@ -76,24 +79,40 @@ func initChaser() {
 func createWalls() {
 	wall = make([]*Box, 0, 100)
 
-	makeMaze(&Box{0, 0, playfield.Width, playfield.Height})
+	makeMaze(&Box{0, 0, playfield.Width, playfield.Height}, 0)
 }
 
-func makeMaze(box *Box) {
-	fmt.Println("makeMaze ", box)
+func makeMaze(box *Box, depth uint8) {
+	depth++
+fmt.Println("DEPTH ", depth)
+/*
+  if depth > 2 {
+		return
+	}
+	*/
+
+	if box.X > playfield.Width {
+		panic("box X bigger than playfield")
+	}
+	if box.Y > playfield.Height {
+		panic("box H bigger than playfield")
+	}
 	// subdivide
 
 	// player gets loaded after state is created, so we need to hardcode
 	// player bounds + a little fudge
-	//minX := player.Bounds.W
+	//minX := player.Bounds.W  (70, 95 minimum)
 	//minY := player.Bounds.H
-	var playerWidth int32 = 70
-	var playerHeight int32 = 90
+	var playerWidth int32 = 120
+	var playerHeight int32 = 120
+	var minimumWidth = playerWidth*2 + WALL_WIDTH
+	var minumumHeight = playerHeight*2 + WALL_WIDTH
 
 	// fail early if nothing to do
-	if box.W < playerWidth * 2 + WALL_WIDTH &&
-	   box.H < playerHeight * 2 + WALL_WIDTH {
-			fmt.Println("Too small!", box.W, box.H)
+	if (box.W < minimumWidth &&
+		box.H < minumumHeight) ||
+		box.W+box.X > playfield.Width ||
+		box.H+box.Y > playfield.Height {
 		return
 	}
 
@@ -104,31 +123,30 @@ func makeMaze(box *Box) {
 	var xPos, yPos int32 = -1, -1
 
 	// make sure there's enough room to make a horizontal wall
-	if box.W > playerWidth*2+WALL_WIDTH {
-		xPos = random(minX, maxX)
+	if box.W > minimumWidth {
+		xPos = random(minX + playerHeight, maxX - playerHeight)
 	}
 
-  // make sure there's enough room to make a veritcal wal
-	if box.H > playerHeight*2+WALL_WIDTH {
-		yPos = random(minY, maxY)
+	// make sure there's enough room to make a veritcal wall
+	if box.H > minumumHeight {
+		yPos = random(minY + playerWidth, maxY - playerWidth)
 	}
 
 	// check for single wall cases
 	if yPos < 0 {
 		// vertical wall
 		makeVerticalMazeWall(xPos, minY, maxY, playerHeight)
-		makeMaze(&Box{minX, minY, xPos - minX, maxY - minY})
-		makeMaze(&Box{xPos, minY, maxX - xPos, maxY - minY})
-		} else if xPos < 0 {
+		makeMaze(&Box{minX, minY, xPos - minX, maxY - minY}, depth)
+		makeMaze(&Box{xPos, minY, maxX - xPos, maxY - minY}, depth)
+	} else if xPos < 0 {
 		// horizontal wall
 		makeHorizontalMazeWall(yPos, minX, maxX, playerWidth)
-		makeMaze(&Box{minX, minY, maxX - minX, yPos - minY})
-		makeMaze(&Box{minX, yPos, maxX - minX, maxY - yPos})
+		makeMaze(&Box{minX, minY, maxX - minX, yPos - minY}, depth)
+		makeMaze(&Box{minX, yPos, maxX - minX, maxY - yPos}, depth)
 	} else {
 		// two walls created, need to subdivide into four walls
 		// skip one chamber randomly
-		skip := random(1,4)
-		fmt.Println("skip ", skip)
+		skip := random(1, 4)
 		if skip != 1 {
 			makeVerticalMazeWall(xPos, minY, yPos, playerHeight)
 		} else {
@@ -150,45 +168,39 @@ func makeMaze(box *Box) {
 			wall = append(wall, &Box{xPos, yPos, maxX, WALL_WIDTH})
 		}
 
-		makeMaze(&Box{minX, minY, xPos - minX, yPos - minY}) // top left
-		makeMaze(&Box{xPos, minY, maxX - xPos, yPos - minY}) // top right
-		makeMaze(&Box{minX, yPos, xPos - minX, maxY - yPos}) // bottom left
-		makeMaze(&Box{xPos, yPos, maxX - minX, maxY - yPos}) // bottom right
+		makeMaze(&Box{minX, minY, xPos - minX, yPos - minY}, depth) // top left
+		makeMaze(&Box{xPos, minY, maxX - xPos, yPos - minY}, depth) // top right
+		makeMaze(&Box{minX, yPos, xPos - minX, maxY - yPos}, depth) // bottom left
+		makeMaze(&Box{xPos, yPos, maxX - minX, maxY - yPos}, depth) // bottom right
 	}
 }
 
 func makeVerticalMazeWall(xPos int32, minY int32, maxY int32, playerHeight int32) {
-	fmt.Println("makeVerticalMazeWall", xPos, minY, maxY, playerHeight)
 	wallOpen := random(minY, maxY)
-	if wallOpen > maxY-minY {
+	if wallOpen > maxY-minY - playerHeight {
 		// wall open is at the bottom
 		wall = append(wall, &Box{xPos, minY, WALL_WIDTH, maxY - minY - playerHeight})
-	} else if wallOpen < minY {
+	} else if wallOpen < minY + playerHeight {
 		// wall open is at the top
-		wall = append(wall, &Box{xPos, playerHeight, WALL_WIDTH, maxY - minY - playerHeight})
+		wall = append(wall, &Box{xPos, playerHeight + minY, WALL_WIDTH, maxY - minY - playerHeight})
 	} else {
 		// wall open is in the middle, make two walls
-		wall = append(wall, &Box{xPos, minY, WALL_WIDTH, wallOpen})
+		wall = append(wall, &Box{xPos, minY, WALL_WIDTH, wallOpen - minY})
 		wall = append(wall, &Box{xPos, wallOpen + playerHeight, WALL_WIDTH, maxY - wallOpen - playerHeight})
 	}
 }
 
 func makeHorizontalMazeWall(yPos int32, minX int32, maxX int32, playerWidth int32) {
-	fmt.Println("makeHorizontalMazeWall ", yPos, minX, maxX, playerWidth)
 	wallOpen := random(minX, maxX)
-	fmt.Println("wallOpen ", wallOpen)
-	if wallOpen > maxX-minX {
-		fmt.Println("open at right")
+	if wallOpen > maxX-minX - playerWidth {
 		// wall open is at the right
 		wall = append(wall, &Box{minX, yPos, maxX - minX - playerWidth, WALL_WIDTH})
-	} else if wallOpen < minX {
-		fmt.Println("open at left")
+	} else if wallOpen < minX + playerWidth {
 		// wall open is at the left
-		wall = append(wall, &Box{playerWidth, yPos, maxX - minX - playerWidth, WALL_WIDTH})
+		wall = append(wall, &Box{playerWidth + minX, yPos, maxX - minX - playerWidth, WALL_WIDTH})
 	} else {
-		fmt.Println("open in middle")
 		// wall open is in the middle, make two walls
-		wall = append(wall, &Box{minX, yPos, wallOpen, WALL_WIDTH})
+		wall = append(wall, &Box{minX, yPos, wallOpen - minX, WALL_WIDTH})
 		wall = append(wall, &Box{wallOpen + playerWidth, yPos, maxX - wallOpen - playerWidth, WALL_WIDTH})
 	}
 }
@@ -296,8 +308,8 @@ func UpdateChaser() {
 // currently 2D, Z ignored
 func translateLocation(origin Location, theta float64, speed float64) Location {
 	speedFudge := 2.0
-	x := int32(float64(origin.X) + math.Cos(theta)*speed * speedFudge)
-	y := int32(float64(origin.Y) + math.Sin(theta)*-speed * speedFudge)
+	x := int32(float64(origin.X) + math.Cos(theta)*speed*speedFudge)
+	y := int32(float64(origin.Y) + math.Sin(theta)*-speed*speedFudge)
 	return Location{x, y, origin.Z}
 }
 
