@@ -14,6 +14,7 @@ type Box struct {
 	Y int32
 	W int32
 	H int32
+	Z int32
 }
 
 // sort array of points by X

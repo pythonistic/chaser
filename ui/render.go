@@ -38,6 +38,9 @@ var (
 	GREEN  sdl.Color = sdl.Color{0, 255, 0, 255}
 	RED    sdl.Color = sdl.Color{255, 0, 0, 255}
 	YELLOW sdl.Color = sdl.Color{255, 255, 0, 255}
+	WHITE sdl.Color = sdl.Color{255,255,255,255}
+	BLUE sdl.Color = sdl.Color{0, 0, 255, 255}
+	PURPLE sdl.Color = sdl.Color{255, 0, 255, 255}
 )
 
 // window definitions
@@ -103,6 +106,7 @@ func UpdateScreen() {
 		renderFpsCounter(rendererViewport)
 	}
 
+renderSolidAreas()
 	renderWalls()
 	renderChaser()
 	renderPlayer()
@@ -142,6 +146,11 @@ func initScreen(screen *Screen) {
 	}
 
 	renderer, err = sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
+	if err != nil {
+		panic(err)
+	}
+
+	err = renderer.SetDrawBlendMode(sdl.BLENDMODE_BLEND)
 	if err != nil {
 		panic(err)
 	}
@@ -213,12 +222,12 @@ func loadSprites() {
 	chaserSprite := sprites["chaser"].size[0]
 	state.GetPlayer().Bounds = &state.Box{playerSprite.X,
 		playerSprite.Y, playerSprite.W / 2,
-		playerSprite.H / 2}
+		playerSprite.H / 2, 0}
 	state.GetPlayer().HalfW = playerSprite.W / 4
 	state.GetPlayer().HalfH = playerSprite.H / 4 // the image is huge!
 	state.GetChaser().Bounds = &state.Box{chaserSprite.X,
 		chaserSprite.Y, chaserSprite.W,
-		chaserSprite.H}
+		chaserSprite.H, 0}
 }
 
 func calculateFps() {
@@ -298,7 +307,62 @@ func renderWalls() {
 		wall := walls[i]
 		rect := &sdl.Rect{wall.X, wall.Y, wall.W, wall.H}
 		renderer.SetDrawColor(RED.R, RED.G, RED.B, RED.A)
+		switch wall.Z {
+			case 0:
+				renderer.SetDrawColor(WHITE.R, WHITE.G, WHITE.B, WHITE.A)
+			case 1:
+				renderer.SetDrawColor(BLUE.R, BLUE.G, BLUE.B, BLUE.A)
+			case 2:
+				renderer.SetDrawColor(GREEN.R, GREEN.G, GREEN.B, GREEN.A)
+			case 3:
+				renderer.SetDrawColor(YELLOW.R, YELLOW.G, YELLOW.B, YELLOW.A)
+			case 4:
+				renderer.SetDrawColor(PURPLE.R, PURPLE.G, PURPLE.B, PURPLE.A)
+			case 5:
+			  renderer.SetDrawColor(BLACK.R, BLACK.G, BLACK.B, BLACK.A)
+		}
+		err := renderer.DrawRect(rect)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func renderSolidAreas() {
+	areas := state.GetAreas()
+	for _, area := range areas {
+		rect := &sdl.Rect{area.X, area.Y, area.W, area.H}
+		if area.Z == 3 {
+
+		renderer.SetDrawColor(RED.R, RED.G, RED.B, 32)
+		switch area.Z {
+			case 0:
+			renderer.SetDrawColor(WHITE.R, WHITE.G, WHITE.B, 32)
+			case 1:
+			renderer.SetDrawColor(BLUE.R, BLUE.G, BLUE.B, 32)
+			case 2:
+			renderer.SetDrawColor(GREEN.R, GREEN.G, GREEN.B, 32)
+			case 3:
+			renderer.SetDrawColor(YELLOW.R, YELLOW.G, YELLOW.B, 32)
+			case 4:
+			renderer.SetDrawColor(PURPLE.R, PURPLE.G, PURPLE.B, 32)
+			case 5:
+			renderer.SetDrawColor(BLACK.R, BLACK.G, BLACK.B, 32)
+		}
+		err := renderer.FillRect(rect)
+		if err != nil {
+			panic(err)
+		}
+		renderer.SetDrawColor(0,0,0,128)
 		renderer.DrawRect(rect)
+	}
+
+	for _, opening := range state.GetOpenings() {
+		rect := &sdl.Rect{opening.X, opening.Y, opening.W, opening.H}
+		renderer.SetDrawColor(WHITE.R, WHITE.G, WHITE.B, 64)
+		renderer.DrawRect(rect)
+	}
+
 	}
 }
 
