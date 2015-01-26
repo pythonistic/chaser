@@ -136,6 +136,43 @@ fmt.Println("Box ", box)
 		yPos = random(minY + playerWidth, maxY - playerWidth)
 	}
 
+	// check for intersection with an existing opening
+	for _, open := range opening {
+		if open.Contains(&Point{minX, yPos}) ||
+		   open.Contains(&Point{maxX, yPos}) {
+				// fix the y pos
+				if yPos - minY > maxY - yPos {
+					// closer to bottom
+					fmt.Println("A) adjusting yPos from", yPos, "to", (open.Y + open.H + 1))
+					yPos = open.Y + open.H + 1
+				} else {
+					fmt.Println("B) adjusting yPos from", yPos, "to", (open.Y - 1))
+				  yPos = open.Y - 1
+				}
+				if yPos < minY || yPos > maxY{
+					// area too small to really subdivide
+					yPos = -1
+				}
+			}
+
+		if open.Contains(&Point{xPos, minY}) ||
+			 open.Contains(&Point{xPos, maxY}) {
+				// fix the x pos
+				if xPos - minX > maxX - xPos {
+					// closer to right
+					fmt.Println("C) adjusting xPos from", xPos, "to", (open.X + open.W + 1))
+					xPos = open.X + open.W + 1
+				} else {
+					fmt.Println("D) adjusting xPos from", xPos, "to", (open.X - 1))
+					xPos = open.X - 1
+				}
+				if xPos < minX || xPos > maxX {
+					// area too small to subdivide
+					xPos = -1
+				}
+			}
+		}
+
 	// check for single wall cases
 	if yPos < 0 {
 		fmt.Println("vertical wall case - xPos", xPos)
