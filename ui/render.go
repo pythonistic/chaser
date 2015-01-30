@@ -32,12 +32,14 @@ var (
 
 // ==== Public interface
 
+// InitRenderer initializes the game rendering structures and window.
 func InitRenderer(screen *Screen) {
 	initScreen(screen)
 	initText()
 	loadSprites()
 }
 
+// UpdateScreen is called once per frame or tick to redraw the screen.
 func UpdateScreen() {
 	var err error
 
@@ -56,7 +58,7 @@ func UpdateScreen() {
 		panic(err)
 	}
 
-	var rendererViewport *sdl.Rect = &sdl.Rect{0, 0, 0, 0}
+	var rendererViewport = &sdl.Rect{X: 0, Y: 0, W: 0, H: 0}
 	renderer.GetViewport(rendererViewport)
 
 	if renderFps {
@@ -71,6 +73,7 @@ func UpdateScreen() {
 	renderer.Present()
 }
 
+// ShutdownRenderer is called to release window and UI resources when the game is exiting.
 func ShutdownRenderer() {
 	shutdownText()
 	shutdownScreen()
@@ -79,15 +82,15 @@ func ShutdownRenderer() {
 // ====== Implementations
 
 func initScreen(screen *Screen) {
-	var originX int = sdl.WINDOWPOS_UNDEFINED
-	var originY int = sdl.WINDOWPOS_UNDEFINED
+	var originX = sdl.WINDOWPOS_UNDEFINED
+	var originY = sdl.WINDOWPOS_UNDEFINED
 	var flags uint32 = sdl.WINDOW_SHOWN
 
-	if screen.OriginX != SCREEN_ORIGIN_UNDEFINED {
+	if screen.OriginX != ScreenOriginUndefined {
 		originX = int(screen.OriginX)
 	}
 
-	if screen.OriginY != SCREEN_ORIGIN_UNDEFINED {
+	if screen.OriginY != ScreenOriginUndefined {
 		originY = int(screen.OriginY)
 	}
 
@@ -136,19 +139,19 @@ func loadSprites() {
 	// set the Player and Chaser bounds
 	playerSprite := sprites["player"].size[0]
 	chaserSprite := sprites["chaser"].size[0]
-	state.GetPlayer().Bounds = &state.Box{playerSprite.X,
-		playerSprite.Y, playerSprite.W / 2,
-		playerSprite.H / 2, 0}
+	state.GetPlayer().Bounds = &state.Box{X: playerSprite.X,
+		Y: playerSprite.Y, W: playerSprite.W / 2,
+		H: playerSprite.H / 2, Z: 0}
 	state.GetPlayer().HalfW = playerSprite.W / 4
 	state.GetPlayer().HalfH = playerSprite.H / 4 // the image is huge!
-	state.GetChaser().Bounds = &state.Box{chaserSprite.X,
-		chaserSprite.Y, chaserSprite.W,
-		chaserSprite.H, 0}
+	state.GetChaser().Bounds = &state.Box{X: chaserSprite.X,
+		Y: chaserSprite.Y, W: chaserSprite.W,
+		H: chaserSprite.H, Z: 0}
 }
 
 func calculateFps() {
-	var lastFpsDuration time.Duration = time.Since(lastFpsTime)
-	frameCount += 1
+	var lastFpsDuration = time.Since(lastFpsTime)
+	frameCount++
 	if lastFpsDuration > time.Second {
 		lastFpsTime = time.Now()
 		currentFps = strconv.Itoa(int(frameCount))
@@ -161,9 +164,9 @@ func renderFpsCounter(rendererViewport *sdl.Rect) {
 	var err error
 
 	// write the FPS counter
-	fpsSurface := sansFont16.RenderText_Solid(currentFps, YELLOW)
+	fpsSurface := sansFont16.RenderText_Solid(currentFps, Yellow)
 	//fpsSurface := sansFont16.RenderText_Solid("Owen", YELLOW)
-	fpsRect := sdl.Rect{rendererViewport.W - 50, 5, fpsSurface.W, fpsSurface.H}
+	fpsRect := sdl.Rect{X: rendererViewport.W - 50, Y: 5, W: fpsSurface.W, H: fpsSurface.H}
 	// fpsRect := sdl.Rect{10, 10, fpsSurface.W, fpsSurface.H}
 	var fpsTexture *sdl.Texture
 	fpsTexture, err = renderer.CreateTextureFromSurface(fpsSurface)
@@ -185,8 +188,8 @@ func renderPlayer() {
 	player := state.GetPlayer()
 
 	bounds := player.GetCollisionBox()
-	rect := &sdl.Rect{bounds.X, bounds.Y, bounds.W, bounds.H}
-	renderer.SetDrawColor(YELLOW.R, YELLOW.G, YELLOW.B, YELLOW.A)
+	rect := &sdl.Rect{X: bounds.X, Y: bounds.Y, W: bounds.W, H: bounds.H}
+	renderer.SetDrawColor(Yellow.R, Yellow.G, Yellow.B, Yellow.A)
 	renderer.DrawRect(rect)
 	//renderTriangle(player.Location, GREEN)
 	renderSprite(sprites["player"], player.Location)
@@ -207,9 +210,9 @@ func renderTriangle(o state.Location, c sdl.Color) {
 }
 
 func renderSprite(sprite *Sprite, location state.Location) {
-	rect := &sdl.Rect{sprite.offsetX[0] + location.X,
-		sprite.offsetY[0] + location.Y,
-		sprite.size[0].W, sprite.size[0].H}
+	rect := &sdl.Rect{X: sprite.offsetX[0] + location.X,
+		Y: sprite.offsetY[0] + location.Y,
+		W: sprite.size[0].W, H: sprite.size[0].H}
 	err := renderer.Copy(sprite.frame[0], nil, rect)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to copy texture to renderer: %s\n", err)
@@ -221,21 +224,21 @@ func renderWalls() {
 	walls := state.GetWalls()
 	for i := 0; i < len(walls); i++ {
 		wall := walls[i]
-		rect := &sdl.Rect{wall.X, wall.Y, wall.W, wall.H}
-		renderer.SetDrawColor(RED.R, RED.G, RED.B, RED.A)
+		rect := &sdl.Rect{X: wall.X, Y: wall.Y, W: wall.W, H: wall.H}
+		renderer.SetDrawColor(Red.R, Red.G, Red.B, Red.A)
 		switch wall.Z {
 		case 0:
-			renderer.SetDrawColor(WHITE.R, WHITE.G, WHITE.B, WHITE.A)
+			renderer.SetDrawColor(White.R, White.G, White.B, White.A)
 		case 1:
-			renderer.SetDrawColor(BLUE.R, BLUE.G, BLUE.B, BLUE.A)
+			renderer.SetDrawColor(Blue.R, Blue.G, Blue.B, Blue.A)
 		case 2:
-			renderer.SetDrawColor(GREEN.R, GREEN.G, GREEN.B, GREEN.A)
+			renderer.SetDrawColor(Green.R, Green.G, Green.B, Green.A)
 		case 3:
-			renderer.SetDrawColor(YELLOW.R, YELLOW.G, YELLOW.B, YELLOW.A)
+			renderer.SetDrawColor(Yellow.R, Yellow.G, Yellow.B, Yellow.A)
 		case 4:
-			renderer.SetDrawColor(PURPLE.R, PURPLE.G, PURPLE.B, PURPLE.A)
+			renderer.SetDrawColor(Purple.R, Purple.G, Purple.B, Purple.A)
 		case 5:
-			renderer.SetDrawColor(BLACK.R, BLACK.G, BLACK.B, BLACK.A)
+			renderer.SetDrawColor(Black.R, Black.G, Black.B, Black.A)
 		}
 		err := renderer.DrawRect(rect)
 		if err != nil {
@@ -247,23 +250,23 @@ func renderWalls() {
 func renderSolidAreas() {
 	areas := state.GetAreas()
 	for _, area := range areas {
-		rect := &sdl.Rect{area.X, area.Y, area.W, area.H}
+		rect := &sdl.Rect{X: area.X, Y: area.Y, W: area.W, H: area.H}
 		if area.Z == 3 {
 
-			renderer.SetDrawColor(RED.R, RED.G, RED.B, 32)
+			renderer.SetDrawColor(Red.R, Red.G, Red.B, Red.A)
 			switch area.Z {
 			case 0:
-				renderer.SetDrawColor(WHITE.R, WHITE.G, WHITE.B, 32)
+				renderer.SetDrawColor(White.R, White.G, White.B, White.A)
 			case 1:
-				renderer.SetDrawColor(BLUE.R, BLUE.G, BLUE.B, 32)
+				renderer.SetDrawColor(Blue.R, Blue.G, Blue.B, Blue.A)
 			case 2:
-				renderer.SetDrawColor(GREEN.R, GREEN.G, GREEN.B, 32)
+				renderer.SetDrawColor(Green.R, Green.G, Green.B, Green.A)
 			case 3:
-				renderer.SetDrawColor(YELLOW.R, YELLOW.G, YELLOW.B, 32)
+				renderer.SetDrawColor(Yellow.R, Yellow.G, Yellow.B, Yellow.A)
 			case 4:
-				renderer.SetDrawColor(PURPLE.R, PURPLE.G, PURPLE.B, 32)
+				renderer.SetDrawColor(Purple.R, Purple.G, Purple.B, Purple.A)
 			case 5:
-				renderer.SetDrawColor(BLACK.R, BLACK.G, BLACK.B, 32)
+				renderer.SetDrawColor(Black.R, Black.G, Black.B, Black.A)
 			}
 			err := renderer.FillRect(rect)
 			if err != nil {
@@ -274,8 +277,8 @@ func renderSolidAreas() {
 		}
 
 		for _, opening := range state.GetOpenings() {
-			rect := &sdl.Rect{opening.X, opening.Y, opening.W, opening.H}
-			renderer.SetDrawColor(WHITE.R, WHITE.G, WHITE.B, 64)
+			rect := &sdl.Rect{X: opening.X, Y: opening.Y, W: opening.W, H: opening.H}
+			renderer.SetDrawColor(White.R, White.G, White.B, 64)
 			renderer.DrawRect(rect)
 		}
 

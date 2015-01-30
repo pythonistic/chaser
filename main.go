@@ -8,16 +8,16 @@ import (
 )
 
 // ideal frames per second
-const FRAMERATE int64 = 60
+const Framerate int64 = 60
 
 // ideal render + sleep time based on FPS
-const FRAMERATE_SLEEP_NS int64 = int64(time.Second) / FRAMERATE
+const FramerateSleepNs = int64(time.Second) / Framerate
 
 // sleep a minimum of 10 ms per loop
-const MINIMUM_SLEEP_DURATION time.Duration = time.Duration(10 * 1000 * 1000)
+const MinimumSleepDuration time.Duration = time.Duration(10 * 1000 * 1000)
 
 // playfield size
-var playfield state.Playfield = state.Playfield{1024, 768}
+var playfield = state.Playfield{Width: 1024, Height: 768}
 
 var lastSleep time.Time
 
@@ -38,22 +38,26 @@ func main() {
 	CleanUp()
 }
 
+// Init intializes the game state in the correct order.
 func Init() {
 	state.InitState(&playfield)
-	var screen = ui.Screen{ui.SCREEN_ORIGIN_UNDEFINED, ui.SCREEN_ORIGIN_UNDEFINED,
-		uint32(playfield.Width), uint32(playfield.Height), ui.COLOR_DEPTH_24, true, "Chaser"}
+	var screen = ui.Screen{OriginX: ui.ScreenOriginUndefined,
+		OriginY: ui.ScreenOriginUndefined, Width: playfield.Width,
+		Height: playfield.Height, Depth: ui.ColorDepth24, Windowed: true,
+		Title: "Chaser"}
 	ui.InitRenderer(&screen)
 }
 
+// Sleep calculates how long to sleep between frames and pauses the program.
 func Sleep() {
-	var lastDuration time.Duration = time.Since(lastSleep)
+	var lastDuration = time.Since(lastSleep)
 
 	// we want to sleep to try to match 60 FPS
-	var sleepDuration time.Duration = time.Duration(FRAMERATE_SLEEP_NS -
+	var sleepDuration = time.Duration(FramerateSleepNs -
 		lastDuration.Nanoseconds())
 
-	if sleepDuration < MINIMUM_SLEEP_DURATION {
-		sleepDuration = MINIMUM_SLEEP_DURATION
+	if sleepDuration < MinimumSleepDuration {
+		sleepDuration = MinimumSleepDuration
 	}
 
 	// capture the last sleep so we can adjust to match framerate
@@ -62,6 +66,7 @@ func Sleep() {
 	time.Sleep(sleepDuration)
 }
 
+// CleanUp cleans up as the game is shutting down.
 func CleanUp() {
 	ui.ShutdownRenderer()
 }

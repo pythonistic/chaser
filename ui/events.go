@@ -3,9 +3,11 @@ package ui
 import (
 	"chaser/state"
 	"fmt"
+
 	"github.com/veandco/go-sdl2/sdl"
 )
 
+// HandleEvents is a skeleton UI event handler.
 func HandleEvents() bool {
 	var event sdl.Event
 	var keepRunning = true
@@ -31,10 +33,10 @@ func HandleEvents() bool {
 				switch t.Button {
 				case sdl.BUTTON_LEFT:
 					state.SetClickLocation(state.Location{t.X, t.Y, 0.0},
-						state.BEHAVIOR_ATTRACT)
+						state.BehaviorAttract)
 				case sdl.BUTTON_RIGHT:
 					state.SetClickLocation(state.Location{t.X, t.Y, 0.0},
-						state.BEHAVIOR_AVOID)
+						state.BehaviorAvoid)
 				}
 			}
 		case *sdl.MouseWheelEvent:

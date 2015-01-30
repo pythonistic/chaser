@@ -19,12 +19,14 @@ var (
 	opening   []*Box
 )
 
+// Location represents a coordinate in the game.
 type Location struct {
 	X int32
 	Y int32
 	Z int32
 }
 
+// Player represents the player's avatar in the game.
 type Player struct {
 	Location  Location
 	Direction float64
@@ -34,6 +36,7 @@ type Player struct {
 	HalfH     int32
 }
 
+// Chaser represents a mobile in the game.
 type Chaser struct {
 	Location  Location
 	Direction float64
@@ -41,11 +44,13 @@ type Chaser struct {
 	Bounds    *Box
 }
 
+// Playfield represents the playable area in the game.
 type Playfield struct {
 	Width  int32
 	Height int32
 }
 
+// InitState initializes the game structures to a known, playable state.
 func InitState(p *Playfield) {
 	seed := time.Now().UnixNano()
 	//var seed int64 = 1421978894553050386
@@ -101,8 +106,8 @@ func makeMaze(box *Box) {
 	//minY := player.Bounds.H
 	var playerWidth int32 = 120
 	var playerHeight int32 = 120
-	var minimumWidth = playerWidth*2 + WALL_WIDTH
-	var minumumHeight = playerHeight*2 + WALL_WIDTH
+	var minimumWidth = playerWidth*2 + WallWidth
+	var minumumHeight = playerHeight*2 + WallWidth
 
 	// fail early if nothing to do
 	if (box.W < minimumWidth &&
@@ -188,22 +193,22 @@ func makeMaze(box *Box) {
 		if skip != 1 {
 			makeVerticalMazeWall(xPos, minY, yPos, playerWidth, playerHeight, depth)
 		} else {
-			wall = append(wall, &Box{xPos, minY, WALL_WIDTH, yPos, depth})
+			wall = append(wall, &Box{xPos, minY, WallWidth, yPos, depth})
 		}
 		if skip != 2 {
 			makeVerticalMazeWall(xPos, yPos, maxY, playerWidth, playerHeight, depth)
 		} else {
-			wall = append(wall, &Box{xPos, yPos, WALL_WIDTH, maxY, depth})
+			wall = append(wall, &Box{xPos, yPos, WallWidth, maxY, depth})
 		}
 		if skip != 3 {
 			makeHorizontalMazeWall(yPos, minX, xPos, playerWidth, playerHeight, depth)
 		} else {
-			wall = append(wall, &Box{minX, yPos, xPos, WALL_WIDTH, depth})
+			wall = append(wall, &Box{minX, yPos, xPos, WallWidth, depth})
 		}
 		if skip != 4 {
 			makeHorizontalMazeWall(yPos, xPos, maxX, playerWidth, playerHeight, depth)
 		} else {
-			wall = append(wall, &Box{xPos, yPos, maxX, WALL_WIDTH, depth})
+			wall = append(wall, &Box{xPos, yPos, maxX, WallWidth, depth})
 		}
 
 		fmt.Println("make top left", Box{minX, minY, xPos - minX, yPos - minY, depth})
@@ -222,20 +227,20 @@ func makeVerticalMazeWall(xPos int32, minY int32, maxY int32, playerWidth int32,
 	wallOpen := random(minY, maxY)
 	if wallOpen > maxY-minY-playerHeight {
 		// wall open is at the bottom
-		fmt.Println("open bottom", Box{xPos, minY, WALL_WIDTH, maxY - minY - playerHeight, depth})
-		wall = append(wall, &Box{xPos, minY, WALL_WIDTH, maxY - minY - playerHeight, depth})
+		fmt.Println("open bottom", Box{xPos, minY, WallWidth, maxY - minY - playerHeight, depth})
+		wall = append(wall, &Box{xPos, minY, WallWidth, maxY - minY - playerHeight, depth})
 		opening = append(opening, &Box{xPos - playerWidth/2, maxY - playerHeight, playerWidth, playerHeight, depth})
 	} else if wallOpen < minY+playerHeight {
 		// wall open is at the top
-		fmt.Println("open top", Box{xPos, playerHeight + minY, WALL_WIDTH, maxY - minY - playerHeight, depth})
-		wall = append(wall, &Box{xPos, playerHeight + minY, WALL_WIDTH, maxY - minY - playerHeight, depth})
+		fmt.Println("open top", Box{xPos, playerHeight + minY, WallWidth, maxY - minY - playerHeight, depth})
+		wall = append(wall, &Box{xPos, playerHeight + minY, WallWidth, maxY - minY - playerHeight, depth})
 		opening = append(opening, &Box{xPos - playerWidth/2, minY, playerWidth, playerHeight, depth})
 	} else {
 		// wall open is in the middle, make two walls
-		fmt.Println("open midtop", Box{xPos, minY, WALL_WIDTH, wallOpen - minY, depth})
-		fmt.Println("open midbot", Box{xPos, minY, WALL_WIDTH, wallOpen - minY, depth})
-		wall = append(wall, &Box{xPos, minY, WALL_WIDTH, wallOpen - minY, depth})
-		wall = append(wall, &Box{xPos, wallOpen + playerHeight, WALL_WIDTH, maxY - wallOpen - playerHeight, depth})
+		fmt.Println("open midtop", Box{xPos, minY, WallWidth, wallOpen - minY, depth})
+		fmt.Println("open midbot", Box{xPos, minY, WallWidth, wallOpen - minY, depth})
+		wall = append(wall, &Box{xPos, minY, WallWidth, wallOpen - minY, depth})
+		wall = append(wall, &Box{xPos, wallOpen + playerHeight, WallWidth, maxY - wallOpen - playerHeight, depth})
 		opening = append(opening, &Box{xPos - playerWidth/2, wallOpen, playerWidth, playerHeight, depth})
 	}
 }
@@ -244,32 +249,36 @@ func makeHorizontalMazeWall(yPos int32, minX int32, maxX int32, playerWidth int3
 	wallOpen := random(minX, maxX)
 	if wallOpen > maxX-minX-playerWidth {
 		// wall open is at the right
-		wall = append(wall, &Box{minX, yPos, maxX - minX - playerWidth, WALL_WIDTH, depth})
+		wall = append(wall, &Box{minX, yPos, maxX - minX - playerWidth, WallWidth, depth})
 		opening = append(opening, &Box{maxX - playerWidth, yPos - playerHeight/2, playerWidth, playerHeight, depth})
 	} else if wallOpen < minX+playerWidth {
 		// wall open is at the left
-		wall = append(wall, &Box{playerWidth + minX, yPos, maxX - minX - playerWidth, WALL_WIDTH, depth})
+		wall = append(wall, &Box{playerWidth + minX, yPos, maxX - minX - playerWidth, WallWidth, depth})
 		opening = append(opening, &Box{minX, yPos - playerHeight/2, playerWidth, playerHeight, depth})
 	} else {
 		// wall open is in the middle, make two walls
-		wall = append(wall, &Box{minX, yPos, wallOpen - minX, WALL_WIDTH, depth})
-		wall = append(wall, &Box{wallOpen + playerWidth, yPos, maxX - wallOpen - playerWidth, WALL_WIDTH, depth})
+		wall = append(wall, &Box{minX, yPos, wallOpen - minX, WallWidth, depth})
+		wall = append(wall, &Box{wallOpen + playerWidth, yPos, maxX - wallOpen - playerWidth, WallWidth, depth})
 		opening = append(opening, &Box{wallOpen, yPos - playerHeight/2, playerWidth, playerHeight, depth})
 	}
 }
 
+// GetPlayer is a convenience method to return the Player struct.
 func GetPlayer() *Player {
 	return player
 }
 
+// GetChaser is a convenience method to return the Chaser struct.
 func GetChaser() *Chaser {
 	return chaser
 }
 
+// GetScore is a convenience method to return the current score.
 func GetScore() int32 {
 	return score
 }
 
+// UpdateState is called once per frame or tick to update the game state.
 func UpdateState() {
 	player.Location = translateLocation(player.Location, player.Direction, player.Speed)
 	collisionBox := player.GetCollisionBox()
@@ -328,6 +337,7 @@ func UpdateState() {
 	UpdateChaser()
 }
 
+// SetClickLocation sets the location of a player's mouse click.
 func SetClickLocation(click Location, behavior uint8) {
 	target = &click
 
@@ -335,7 +345,7 @@ func SetClickLocation(click Location, behavior uint8) {
 	y := player.Location.Y - click.Y
 	x := click.X - player.Location.X
 
-	if behavior == BEHAVIOR_AVOID {
+	if behavior == BehaviorAvoid {
 		x *= -1
 		y *= -1
 	}
@@ -348,6 +358,7 @@ func SetClickLocation(click Location, behavior uint8) {
 	player.SetSpeed(1.0)
 }
 
+// UpdateChaser updates the state of the chaser to follow the player.
 func UpdateChaser() {
 	// TODO refactor this - copied chase logic from SetClickLocation
 	// set the chaser to follow the player
@@ -366,51 +377,61 @@ func translateLocation(origin Location, theta float64, speed float64) Location {
 	return Location{x, y, origin.Z}
 }
 
+// AdjustSpeed adds the amount to the speed at which the player moves.
 func (p *Player) AdjustSpeed(amount float64) {
 	if p.Speed > -1.0 && p.Speed < 1.0 {
 		p.Speed += amount
 	}
 }
 
+// SetSpeed sets the speed of the player.
 func (p *Player) SetSpeed(amount float64) {
 	p.Speed = amount
 }
 
+// SetSpeed sets the speed of the chaser.
 func (c *Chaser) SetSpeed(amount float64) {
 	c.Speed = amount
 }
 
+// SetDirection sets the absolute direction in radians of the player.
 func (p *Player) SetDirection(theta float64) {
 	p.Direction = theta
 }
 
+// SetDirection sets the absolute direction in radians of the chaser.
 func (c *Chaser) SetDirection(theta float64) {
 	c.Direction = theta
 }
 
+// AdjustDirection adds the amount of radians to the player's direction.
 func (p *Player) AdjustDirection(amount float64) {
 	p.Direction += amount
-	if p.Direction > TWO_PI {
-		p.Direction = p.Direction - TWO_PI
-	} else if p.Direction < NEG_TWO_PI {
-		p.Direction = p.Direction - NEG_TWO_PI
+	if p.Direction > TwoPi {
+		p.Direction = p.Direction - TwoPi
+	} else if p.Direction < NegTwoPi {
+		p.Direction = p.Direction - NegTwoPi
 	}
 }
 
+// GetCollisionBox returns the bounds of the player sprite.
 func (p *Player) GetCollisionBox() *Box {
 	b := &Box{p.Location.X - p.HalfW, p.Location.Y - p.HalfH,
 		p.Bounds.W, p.Bounds.H, 0}
 	return b
 }
 
+// GetWalls is a convenience method to get the impassable areas of the playfield.
 func GetWalls() []*Box {
 	return wall
 }
 
+// GetAreas is a convenience method to get the subdivided areas of the playfield, suitable for R-trees.  This method is likely to go away.
 func GetAreas() []*Box {
 	return area
 }
 
+// GetOpenings is a convenience method to get the openings in the playfield walls.  This method is likely to go away.
 func GetOpenings() []*Box {
 	return opening
 }

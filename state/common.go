@@ -10,17 +10,12 @@ type Point struct {
 	Y int32
 }
 
-// Rect represents a 2D rectangular object.
-type Rect struct {
+// Box is a rectangle with a Z coordinate, intended for stacking when rendering.
+type Box struct {
 	X int32
 	Y int32
 	W int32
 	H int32
-}
-
-// Box is a rectangle with a Z coordinate, intended for stacking when rendering.
-type Box struct {
-	Rect
 	Z int32
 }
 
@@ -52,8 +47,8 @@ func (p ByX) Less(i, j int) bool {
 	return p[i].X < p[j].X
 }
 
-// Contains returns True when the Point p is within Rect b.
-func (b *Rect) Contains(p *Point) bool {
+// Contains returns True when the Point p is within Box b.
+func (b *Box) Contains(p *Point) bool {
 	return b.X <= p.X && p.X <= b.X+b.W &&
 		b.Y <= p.Y && p.Y <= b.Y+b.H
 }
@@ -64,9 +59,9 @@ func (p *Point) Distance(o *Point) float64 {
 		(p.Y-p.Y)*(p.Y-o.Y)))
 }
 
-// ClosestPair finds the closest pair of Point instances with two Rect instances.
+// ClosestPair finds the closest pair of Point instances with two Box instances.
 // This is implemented using a brute force method.
-func (b *Rect) ClosestPair(t *Rect) (*Point, *Point, float64) {
+func (b *Box) ClosestPair(t *Box) (*Point, *Point, float64) {
 	points1 := [4]Point{Point{b.X, b.Y}, Point{b.X + b.W, b.Y},
 		Point{b.X + b.W, b.Y + b.H}, Point{b.X, b.Y + b.H}}
 	points2 := [4]Point{Point{t.X, t.Y}, Point{t.X + t.W, t.Y},
@@ -88,8 +83,8 @@ func (b *Rect) ClosestPair(t *Rect) (*Point, *Point, float64) {
 	return closest1, closest2, minimumDistance
 }
 
-// Intersects returns true if the Rect instances intersect.
-func (b *Rect) Intersects(t *Rect) bool {
+// Intersects returns true if the Box instances intersect.
+func (b *Box) Intersects(t *Box) bool {
 	if b.Y+b.H < t.Y {
 		return false
 	}

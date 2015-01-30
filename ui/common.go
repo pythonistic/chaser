@@ -4,7 +4,10 @@ import "github.com/veandco/go-sdl2/sdl"
 
 // SpriteFrame represents a single frame of a sprite definition.
 type SpriteFrame struct {
-	Rect
+	X int32
+	Y int32
+	W int32
+	H int32
 }
 
 // SpriteDef represents a sprite definition as loaded from tiles.json.
@@ -28,10 +31,10 @@ type Sprite struct {
 
 // Screen provides a portable screen definition for callers.
 type Screen struct {
-	OriginX  uint32
-	OriginY  uint32
-	Width    uint32
-	Height   uint32
+	OriginX  int32
+	OriginY  int32
+	Width    int32
+	Height   int32
 	Depth    uint8 // not used
 	Windowed bool
 	Title    string
@@ -47,7 +50,7 @@ const (
 	// ColorDepth24 indicates 24-bit color.
 	ColorDepth24 = 24
 	// ScreenOriginUndefined is a magic value that the program to render the game window in the center.
-	ScreenOriginUndefined = 0xFFFFFFFF
+	ScreenOriginUndefined = 0xFFFFFF
 )
 
 // color definitions
