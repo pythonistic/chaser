@@ -1,10 +1,14 @@
 package ui
 
 import (
+	"encoding/json"
+	"io/ioutil"
+
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/sdl_image"
 )
 
+// LoadTiles loads the tiles in the given JSDON filename, typically tiles.json.
 func LoadTiles(filename string) {
 	// load the sprite definitons
 
@@ -39,7 +43,7 @@ func LoadTiles(filename string) {
 			if err != nil {
 				panic(err)
 			}
-			newSprite.size[0] = &sdl.Rect{0, 0, spriteSurface.W, spriteSurface.H}
+			newSprite.size[0] = &sdl.Rect{X: 0, Y: 0, W: spriteSurface.W, H: spriteSurface.H}
 			newSprite.offsetX[0] = spriteSurface.W / -2
 			newSprite.offsetY[0] = spriteSurface.H / -2
 			sprites[spriteName] = &newSprite
@@ -50,4 +54,23 @@ func LoadTiles(filename string) {
 
 	// cleanup
 	img.Quit()
+}
+
+// ParseTileDefinitions parses a given filename and turns it into a TilesFile structure.
+func ParseTileDefinitions(filename string) *TilesFile {
+	var rawFile []byte
+	var err error
+
+	rawFile, err = ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+
+	var tilesFile TilesFile
+	err = json.Unmarshal(rawFile, &tilesFile)
+	if err != nil {
+		panic(err)
+	}
+
+	return &tilesFile
 }

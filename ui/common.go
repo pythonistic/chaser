@@ -12,7 +12,19 @@ type SpriteFrame struct {
 
 // SpriteDef represents a sprite definition as loaded from tiles.json.
 type SpriteDef struct {
-	frames []*SpriteFrame
+	Name   string
+	Frames []*SpriteFrame
+}
+
+// SpriteFile represents the sprites in a single graphics file as loaded from tiles.json.
+type SpriteFile struct {
+	Filename string
+	Sprites  []SpriteDef
+}
+
+// TilesFile represents the sprite definitions in tiles.json.
+type TilesFile struct {
+	Files []SpriteFile
 }
 
 // Sprite represents a renderable, animated sprite.
