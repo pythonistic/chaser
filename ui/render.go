@@ -134,11 +134,13 @@ func initText() {
 }
 
 func loadSprites() {
-	LoadTiles("tiles.json")
+	LoadTiles("resources/tiles.json")
+
+	fmt.Println("sprites", sprites["player"])
 
 	// set the Player and Chaser bounds
 	playerSprite := sprites["player"].size[0]
-	chaserSprite := sprites["chaser"].size[0]
+	chaserSprite := sprites["orc"].size[0]
 	state.GetPlayer().Bounds = &state.Box{X: playerSprite.X,
 		Y: playerSprite.Y, W: playerSprite.W / 2,
 		H: playerSprite.H / 2, Z: 0}
@@ -198,7 +200,7 @@ func renderPlayer() {
 func renderChaser() {
 	chaser := state.GetChaser()
 	//renderTriangle(chaser.Location, RED)
-	renderSprite(sprites["chaser"], chaser.Location)
+	renderSprite(sprites["orc"], chaser.Location)
 }
 
 func renderTriangle(o state.Location, c sdl.Color) {
@@ -210,10 +212,16 @@ func renderTriangle(o state.Location, c sdl.Color) {
 }
 
 func renderSprite(sprite *Sprite, location state.Location) {
-	rect := &sdl.Rect{X: sprite.offsetX[0] + location.X,
-		Y: sprite.offsetY[0] + location.Y,
-		W: sprite.size[0].W, H: sprite.size[0].H}
-	err := renderer.Copy(sprite.frame[0], nil, rect)
+	// TODO also include a frame indicator
+	frame := 0
+	rect := &sdl.Rect{X: sprite.offsetX[frame] + location.X,
+		Y: sprite.offsetY[frame] + location.Y,
+		W: sprite.size[frame].W, H: sprite.size[frame].H}
+	// use nil for the source rect to copy the whole texture
+	// use nil for the dest to paint the whole renderer
+	// here, we need to specify the source rect based on the frame
+	srcRect := sprite.size[frame]
+	err := renderer.Copy(sprite.frame[frame], srcRect, rect)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to copy texture to renderer: %s\n", err)
 		panic(err)

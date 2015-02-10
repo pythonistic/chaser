@@ -1,7 +1,7 @@
 {
   "Files": [
     {
-      "Filename": "characters-32x32.png",
+      "Filename": "resources/tilecrusader-art/characters-32x32.png",
       "Sprites": [
         {
           "Name": "player",

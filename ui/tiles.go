@@ -11,6 +11,7 @@ import (
 // LoadTiles loads the tiles in the given JSDON filename, typically tiles.json.
 func LoadTiles(filename string) {
 	// load the sprite definitons
+	tilesFiles := ParseTileDefinitions(filename)
 
 	inited := img.Init(img.INIT_PNG)
 	if inited&img.INIT_PNG != img.INIT_PNG {
@@ -18,15 +19,11 @@ func LoadTiles(filename string) {
 	}
 
 	// load the sprites
-	for idx := 0; idx < len(spriteDefs); idx += 2 {
-		spriteName := spriteDefs[idx]
-		spriteFilename := spriteDefs[idx+1]
-
-		// TODO at this time, all the sprites are single image
-		// we'd need to include sprite information:
+	for _, spriteFile := range tilesFiles.Files {
+		// we need to include sprite information:
 		// frame size, frame id/count
 		// image strip position and size
-		rwOp := sdl.RWFromFile(spriteFilename, "rb")
+		rwOp := sdl.RWFromFile(spriteFile.Filename, "rb")
 
 		if rwOp != nil {
 			spriteSurface, err := img.LoadPNG_RW(rwOp)
@@ -34,22 +31,34 @@ func LoadTiles(filename string) {
 			if err != nil {
 				panic(err)
 			}
-
-			newSprite := Sprite{spriteName, spriteFilename, 1,
-				make([]*sdl.Surface, 1, 1), make([]*sdl.Texture, 1, 1),
-				make([]*sdl.Rect, 1, 1), make([]int32, 1, 1), make([]int32, 1, 1)}
-			newSprite.rawFrame[0] = spriteSurface
-			newSprite.frame[0], err = renderer.CreateTextureFromSurface(spriteSurface)
+			spriteTexture, err := renderer.CreateTextureFromSurface(spriteSurface)
 			if err != nil {
 				panic(err)
 			}
-			newSprite.size[0] = &sdl.Rect{X: 0, Y: 0, W: spriteSurface.W, H: spriteSurface.H}
-			newSprite.offsetX[0] = spriteSurface.W / -2
-			newSprite.offsetY[0] = spriteSurface.H / -2
-			sprites[spriteName] = &newSprite
+
+			for _, spriteDef := range spriteFile.Sprites {
+				frameCount := len(spriteDef.Frames)
+				newSprite := Sprite{name: spriteDef.Name, filename: spriteFile.Filename,
+					frameCount: frameCount,
+					rawFrame:   make([]*sdl.Surface, frameCount),
+					frame:      make([]*sdl.Texture, frameCount),
+					size:       make([]*sdl.Rect, frameCount),
+					offsetX:    make([]int32, frameCount),
+					offsetY:    make([]int32, frameCount)}
+				for idx, frameDef := range spriteDef.Frames {
+					newSprite.rawFrame[idx] = spriteSurface
+					newSprite.frame[idx] = spriteTexture
+					newSprite.size[idx] = &sdl.Rect{X: frameDef.X, Y: frameDef.Y,
+						W: frameDef.W, H: frameDef.H}
+					newSprite.offsetX[idx] = frameDef.W / -2
+					newSprite.offsetY[idx] = frameDef.H / -2
+				}
+				sprites[spriteDef.Name] = &newSprite
+			}
 		} else {
-			panic(spriteFilename + " was nil")
+			panic(spriteFile.Filename + " was nil")
 		}
+
 	}
 
 	// cleanup

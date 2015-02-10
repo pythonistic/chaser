@@ -33,7 +33,7 @@ type Sprite struct {
 	filename string
 	// TODO split frames into types
 	// TODO consider overlays on sprites (clothes, equipment, buffs)
-	frameCount uint8
+	frameCount int
 	rawFrame   []*sdl.Surface
 	frame      []*sdl.Texture
 	size       []*sdl.Rect

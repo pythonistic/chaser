@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -14,8 +13,8 @@ func TestParseTileDefintions(t *testing.T) {
 	if len(tilesFile.Files) == 0 {
 		t.Error("no file structures parsed")
 	}
-	if tilesFile.Files[0].Filename != "characters-32x32.png" {
-		t.Error("expected filename incorrect, not characters-32x32.png")
+	if tilesFile.Files[0].Filename != "resources/tilecrusader-art/characters-32x32.png" {
+		t.Error("expected filename incorrect, not characters-32x32.png but was", tilesFile.Files[0].Filename)
 	}
 	if 10 != len(tilesFile.Files[0].Sprites) {
 		t.Error("expected 10 sprites but found", len(tilesFile.Files[0].Sprites))
