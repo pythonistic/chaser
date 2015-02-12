@@ -30,6 +30,8 @@ const (
 	BehaviorAttract = 2
 	// WallWidth indicates the default width of a wall when building levels or pathing.
 	WallWidth = 10
+	// CellSize indicates the default square size of a cell for grids/tiles.  Sprites may be smaller.
+	CellSize = 40
 )
 
 // ByX is an interface for sorting Point instances by the X coordinate.

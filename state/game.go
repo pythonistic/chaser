@@ -17,6 +17,7 @@ var (
 	wall      []*Box
 	area      []*Box
 	opening   []*Box
+	mapGrid   []*MapTile
 )
 
 // Location represents a coordinate in the game.
@@ -49,6 +50,22 @@ type Playfield struct {
 	Width  int32
 	Height int32
 }
+
+// MapTile represents a single map tile in the game.
+type MapTile struct {
+	X        int32
+	Y        int32
+	TileType TileType
+}
+
+// TileType is an "enum"
+type TileType byte
+
+// TileType enumeration
+const (
+	WALL TileType = iota
+	FLOOR
+)
 
 // InitState initializes the game structures to a known, playable state.
 func InitState(p *Playfield) {
@@ -84,19 +101,18 @@ func createWalls() {
 	// makeRecursiveMaze(&Box{0, 0, playfield.Width, playfield.Height, 0})
 
 	// for testing, I'll use Prim's method since I'm intending to have a cell- or grid-based game
-	var cellSize int32 = 40
-	grid := makeRandomizedPrimsMaze(&Box{X: 0, Y: 0, W: playfield.Width / cellSize, H: playfield.Height / cellSize})
+	grid := makeRandomizedPrimsMaze(&Box{X: 0, Y: 0, W: playfield.Width / CellSize, H: playfield.Height / CellSize})
 	for row := 0; row < len(grid); row++ {
 		cells := grid[row]
 		for col := 0; col < len(cells); col++ {
+			var tile MapTile
 			if grid[row][col] {
-				fmt.Print(".")
+				tile = MapTile{X: int32(col), Y: int32(row), TileType: FLOOR}
 			} else {
-				fmt.Print("#")
+				tile = MapTile{X: int32(col), Y: int32(row), TileType: WALL}
 			}
+			mapGrid = append(mapGrid, &tile)
 		}
-
-		fmt.Println("")
 	}
 }
 
@@ -271,4 +287,9 @@ func GetAreas() []*Box {
 // GetOpenings is a convenience method to get the openings in the playfield walls.  This method is likely to go away.
 func GetOpenings() []*Box {
 	return opening
+}
+
+// GetGrid gets the current map tiles.  Consider renaming to GetMapGrid or GetMap.
+func GetGrid() []*MapTile {
+	return mapGrid
 }

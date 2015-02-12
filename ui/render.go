@@ -69,7 +69,7 @@ func UpdateScreen() {
 	//renderSolidAreas()
 	//renderWalls()
 
-	// TODO renderGrid()
+	renderGrid()
 	renderChaser()
 	renderPlayer()
 
@@ -293,6 +293,25 @@ func renderSolidAreas() {
 			renderer.DrawRect(rect)
 		}
 
+	}
+}
+
+func renderGrid() {
+	grid := state.GetGrid()
+	for _, position := range grid {
+		x := position.X * state.CellSize
+		y := position.Y * state.CellSize
+		switch position.TileType {
+		case state.WALL:
+			renderer.SetDrawColor(Black.R, Black.G, Black.B, Black.A)
+		case state.FLOOR:
+			renderer.SetDrawColor(Green.R, Green.G, Green.B, Green.A)
+		}
+		rect := &sdl.Rect{X: x, Y: y, W: state.CellSize, H: state.CellSize}
+		err := renderer.FillRect(rect)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
