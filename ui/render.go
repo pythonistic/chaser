@@ -65,8 +65,11 @@ func UpdateScreen() {
 		renderFpsCounter(rendererViewport)
 	}
 
-	renderSolidAreas()
-	renderWalls()
+	// the following two (commented out) methods are for rendering arbitrary areas
+	//renderSolidAreas()
+	//renderWalls()
+
+	// TODO renderGrid()
 	renderChaser()
 	renderPlayer()
 

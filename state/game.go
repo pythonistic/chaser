@@ -78,188 +78,25 @@ func initChaser() {
 }
 
 func createWalls() {
-	wall = make([]*Box, 0, 100)
-	opening = make([]*Box, 0, 100)
+	// the following has been removed since it's not as appropriate for what I want to create
+	// wall = make([]*Box, 0, 100)
+	// opening = make([]*Box, 0, 100)
+	// makeRecursiveMaze(&Box{0, 0, playfield.Width, playfield.Height, 0})
 
-	makeMaze(&Box{0, 0, playfield.Width, playfield.Height, 0})
-}
-
-func makeMaze(box *Box) {
-	depth := box.Z + 1
-	fmt.Println("DEPTH ", depth)
-	fmt.Println("Box ", box)
-	if depth > 4 {
-		return
-	}
-
-	if box.X > playfield.Width {
-		panic("box X bigger than playfield")
-	}
-	if box.Y > playfield.Height {
-		panic("box H bigger than playfield")
-	}
-	// subdivide
-
-	// player gets loaded after state is created, so we need to hardcode
-	// player bounds + a little fudge
-	//minX := player.Bounds.W  (70, 95 minimum)
-	//minY := player.Bounds.H
-	var playerWidth int32 = 120
-	var playerHeight int32 = 120
-	var minimumWidth = playerWidth*2 + WallWidth
-	var minumumHeight = playerHeight*2 + WallWidth
-
-	// fail early if nothing to do
-	if (box.W < minimumWidth &&
-		box.H < minumumHeight) ||
-		box.W+box.X > playfield.Width ||
-		box.H+box.Y > playfield.Height {
-		return
-	}
-
-	area = append(area, &Box{box.X, box.Y, box.W, box.H, depth})
-
-	minX := box.X
-	minY := box.Y
-	maxX := box.W + minX
-	maxY := box.H + minY
-	var xPos, yPos int32 = -1, -1
-
-	// make sure there's enough room to make a horizontal wall
-	if box.W > minimumWidth {
-		xPos = random(minX+playerHeight, maxX-playerHeight)
-	}
-
-	// make sure there's enough room to make a veritcal wall
-	if box.H > minumumHeight {
-		yPos = random(minY+playerWidth, maxY-playerWidth)
-	}
-
-	// check for intersection with an existing opening
-	for _, open := range opening {
-		if open.Contains(&Point{minX, yPos}) ||
-			open.Contains(&Point{maxX, yPos}) {
-			// fix the y pos
-			if yPos-minY > maxY-yPos {
-				// closer to bottom
-				fmt.Println("A) adjusting yPos from", yPos, "to", (open.Y + open.H + 1))
-				yPos = open.Y + open.H + 1
+	// for testing, I'll use Prim's method since I'm intending to have a cell- or grid-based game
+	var cellSize int32 = 40
+	grid := makeRandomizedPrimsMaze(&Box{X: 0, Y: 0, W: playfield.Width / cellSize, H: playfield.Height / cellSize})
+	for row := 0; row < len(grid); row++ {
+		cells := grid[row]
+		for col := 0; col < len(cells); col++ {
+			if grid[row][col] {
+				fmt.Print(".")
 			} else {
-				fmt.Println("B) adjusting yPos from", yPos, "to", (open.Y - 1))
-				yPos = open.Y - 1
-			}
-			if yPos < minY || yPos > maxY {
-				// area too small to really subdivide
-				yPos = -1
+				fmt.Print("#")
 			}
 		}
 
-		if open.Contains(&Point{xPos, minY}) ||
-			open.Contains(&Point{xPos, maxY}) {
-			// fix the x pos
-			if xPos-minX > maxX-xPos {
-				// closer to right
-				fmt.Println("C) adjusting xPos from", xPos, "to", (open.X + open.W + 1))
-				xPos = open.X + open.W + 1
-			} else {
-				fmt.Println("D) adjusting xPos from", xPos, "to", (open.X - 1))
-				xPos = open.X - 1
-			}
-			if xPos < minX || xPos > maxX {
-				// area too small to subdivide
-				xPos = -1
-			}
-		}
-	}
-
-	// check for single wall cases
-	if yPos < 0 {
-		fmt.Println("vertical wall case - xPos", xPos)
-		// vertical wall
-		makeVerticalMazeWall(xPos, minY, maxY, playerWidth, playerHeight, depth)
-		makeMaze(&Box{minX, minY, xPos - minX, maxY - minY, depth})
-		makeMaze(&Box{xPos, minY, maxX - xPos, maxY - minY, depth})
-	} else if xPos < 0 {
-		// horizontal wall
-		fmt.Println("Horizonal wall case - yPos", yPos)
-		makeHorizontalMazeWall(yPos, minX, maxX, playerWidth, playerHeight, depth)
-		makeMaze(&Box{minX, minY, maxX - minX, yPos - minY, depth})
-		makeMaze(&Box{minX, yPos, maxX - minX, maxY - yPos, depth})
-	} else {
-		// two walls created, need to subdivide into four walls
-		// skip one chamber randomly
-		skip := random(1, 4)
-		fmt.Println("skip ", skip, " xPos", xPos, " yPos", yPos)
-		if skip != 1 {
-			makeVerticalMazeWall(xPos, minY, yPos, playerWidth, playerHeight, depth)
-		} else {
-			wall = append(wall, &Box{xPos, minY, WallWidth, yPos, depth})
-		}
-		if skip != 2 {
-			makeVerticalMazeWall(xPos, yPos, maxY, playerWidth, playerHeight, depth)
-		} else {
-			wall = append(wall, &Box{xPos, yPos, WallWidth, maxY, depth})
-		}
-		if skip != 3 {
-			makeHorizontalMazeWall(yPos, minX, xPos, playerWidth, playerHeight, depth)
-		} else {
-			wall = append(wall, &Box{minX, yPos, xPos, WallWidth, depth})
-		}
-		if skip != 4 {
-			makeHorizontalMazeWall(yPos, xPos, maxX, playerWidth, playerHeight, depth)
-		} else {
-			wall = append(wall, &Box{xPos, yPos, maxX, WallWidth, depth})
-		}
-
-		fmt.Println("make top left", Box{minX, minY, xPos - minX, yPos - minY, depth})
-		makeMaze(&Box{minX, minY, xPos - minX, yPos - minY, depth}) // top left
-		fmt.Println("make top right", Box{xPos, minY, maxX - xPos, yPos - minY, depth})
-		makeMaze(&Box{xPos, minY, maxX - xPos, yPos - minY, depth}) // top right
-		fmt.Println("make bottom left", Box{minX, yPos, xPos - minX, maxY - yPos, depth})
-		makeMaze(&Box{minX, yPos, xPos - minX, maxY - yPos, depth}) // bottom left
-		fmt.Println("make bottom right", Box{xPos, yPos, maxX - xPos, maxY - yPos, depth})
-		makeMaze(&Box{xPos, yPos, maxX - xPos, maxY - yPos, depth}) // bottom right
-	}
-}
-
-func makeVerticalMazeWall(xPos int32, minY int32, maxY int32, playerWidth int32, playerHeight int32, depth int32) {
-	fmt.Println("makeVerticalMazeWall", xPos, minY, maxY, playerHeight)
-	wallOpen := random(minY, maxY)
-	if wallOpen > maxY-minY-playerHeight {
-		// wall open is at the bottom
-		fmt.Println("open bottom", Box{xPos, minY, WallWidth, maxY - minY - playerHeight, depth})
-		wall = append(wall, &Box{xPos, minY, WallWidth, maxY - minY - playerHeight, depth})
-		opening = append(opening, &Box{xPos - playerWidth/2, maxY - playerHeight, playerWidth, playerHeight, depth})
-	} else if wallOpen < minY+playerHeight {
-		// wall open is at the top
-		fmt.Println("open top", Box{xPos, playerHeight + minY, WallWidth, maxY - minY - playerHeight, depth})
-		wall = append(wall, &Box{xPos, playerHeight + minY, WallWidth, maxY - minY - playerHeight, depth})
-		opening = append(opening, &Box{xPos - playerWidth/2, minY, playerWidth, playerHeight, depth})
-	} else {
-		// wall open is in the middle, make two walls
-		fmt.Println("open midtop", Box{xPos, minY, WallWidth, wallOpen - minY, depth})
-		fmt.Println("open midbot", Box{xPos, minY, WallWidth, wallOpen - minY, depth})
-		wall = append(wall, &Box{xPos, minY, WallWidth, wallOpen - minY, depth})
-		wall = append(wall, &Box{xPos, wallOpen + playerHeight, WallWidth, maxY - wallOpen - playerHeight, depth})
-		opening = append(opening, &Box{xPos - playerWidth/2, wallOpen, playerWidth, playerHeight, depth})
-	}
-}
-
-func makeHorizontalMazeWall(yPos int32, minX int32, maxX int32, playerWidth int32, playerHeight int32, depth int32) {
-	wallOpen := random(minX, maxX)
-	if wallOpen > maxX-minX-playerWidth {
-		// wall open is at the right
-		wall = append(wall, &Box{minX, yPos, maxX - minX - playerWidth, WallWidth, depth})
-		opening = append(opening, &Box{maxX - playerWidth, yPos - playerHeight/2, playerWidth, playerHeight, depth})
-	} else if wallOpen < minX+playerWidth {
-		// wall open is at the left
-		wall = append(wall, &Box{playerWidth + minX, yPos, maxX - minX - playerWidth, WallWidth, depth})
-		opening = append(opening, &Box{minX, yPos - playerHeight/2, playerWidth, playerHeight, depth})
-	} else {
-		// wall open is in the middle, make two walls
-		wall = append(wall, &Box{minX, yPos, wallOpen - minX, WallWidth, depth})
-		wall = append(wall, &Box{wallOpen + playerWidth, yPos, maxX - wallOpen - playerWidth, WallWidth, depth})
-		opening = append(opening, &Box{wallOpen, yPos - playerHeight/2, playerWidth, playerHeight, depth})
+		fmt.Println("")
 	}
 }
 

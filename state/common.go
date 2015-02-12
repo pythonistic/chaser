@@ -49,8 +49,8 @@ func (p ByX) Less(i, j int) bool {
 
 // Contains returns True when the Point p is within Box b.
 func (b *Box) Contains(p *Point) bool {
-	return b.X <= p.X && p.X <= b.X+b.W &&
-		b.Y <= p.Y && p.Y <= b.Y+b.H
+	return b.X <= p.X && p.X < b.X+b.W &&
+		b.Y <= p.Y && p.Y < b.Y+b.H
 }
 
 // Distance calculates the distance between two Point instances.
