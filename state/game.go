@@ -102,11 +102,11 @@ func createWalls() {
 
 	// for testing, I'll use Prim's method since I'm intending to have a cell- or grid-based game
 	grid := makeRandomizedPrimsMaze(&Box{X: 0, Y: 0, W: playfield.Width / CellSize, H: playfield.Height / CellSize})
-	for row := 0; row < len(grid); row++ {
-		cells := grid[row]
-		for col := 0; col < len(cells); col++ {
+	for col := 0; col < len(grid); col++ {
+		cells := grid[col]
+		for row := 0; row < len(cells); row++ {
 			var tile MapTile
-			if grid[row][col] {
+			if grid[col][row] {
 				tile = MapTile{X: int32(col), Y: int32(row), TileType: FLOOR}
 			} else {
 				tile = MapTile{X: int32(col), Y: int32(row), TileType: WALL}

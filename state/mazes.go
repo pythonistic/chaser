@@ -3,9 +3,9 @@ package state
 import "fmt"
 
 func makeRandomizedPrimsMaze(box *Box) [][]bool {
-	grid := make([][]bool, box.H)
-	for row := int32(0); row < box.H; row++ {
-		grid[row] = make([]bool, box.W)
+	grid := make([][]bool, box.W)
+	for col := int32(0); col < box.W; col++ {
+		grid[col] = make([]bool, box.H)
 	}
 	fmt.Println("dimensions", box.W, box.H)
 	walls := make([]Point, box.H*box.W)
@@ -32,8 +32,8 @@ func makeRandomizedPrimsMaze(box *Box) [][]bool {
 			opposite = Point{X: cell.X, Y: cell.Y + 2}
 		}
 		if box.Contains(&opposite) {
-			if !grid[opposite.Y][opposite.X] {
-				grid[wall.Y][wall.X] = true
+			if !grid[opposite.X][opposite.Y] {
+				grid[wall.X][wall.Y] = true
 				grid, walls = primsAddCellToMaze(grid, walls, maze, opposite)
 			}
 		}
@@ -43,31 +43,31 @@ func makeRandomizedPrimsMaze(box *Box) [][]bool {
 }
 
 func primsAddCellToMaze(grid [][]bool, walls []Point, maze map[Point]Point, cell Point) ([][]bool, []Point) {
-	grid[cell.Y][cell.X] = true
+	grid[cell.X][cell.Y] = true
 	if cell.X > 0 {
 		pt := Point{X: cell.X - 1, Y: cell.Y}
-		if !grid[pt.Y][pt.X] {
+		if !grid[pt.X][pt.Y] {
 			walls = append(walls, pt)
 			maze[pt] = cell
 		}
 	}
-	if cell.X < int32(len(grid[0])-1) {
+	if cell.X < int32(len(grid)-1) {
 		pt := Point{X: cell.X + 1, Y: cell.Y}
-		if !grid[pt.Y][pt.X] {
+		if !grid[pt.X][pt.Y] {
 			walls = append(walls, pt)
 			maze[pt] = cell
 		}
 	}
 	if cell.Y > 0 {
 		pt := Point{X: cell.X, Y: cell.Y - 1}
-		if !grid[pt.Y][pt.X] {
+		if !grid[pt.X][pt.Y] {
 			walls = append(walls, pt)
 			maze[pt] = cell
 		}
 	}
-	if cell.Y < int32(len(grid)-1) {
+	if cell.Y < int32(len(grid[0])-1) {
 		pt := Point{X: cell.X, Y: cell.Y + 1}
-		if !grid[pt.Y][pt.X] {
+		if !grid[pt.X][pt.Y] {
 			walls = append(walls, pt)
 			maze[pt] = cell
 		}
